@@ -110,7 +110,7 @@
                 android:numStars="5"
                 android:progressTint="@color/rating_main"
                 android:secondaryProgressTint="@color/rating_shadow"
-                android:stepSize="0.1"
+                android:stepSize="0.5"
                 app:layout_constraintStart_toStartOf="@id/movie_LBL_genres"
                 app:layout_constraintTop_toBottomOf="@id/movie_LBL_genres"
                 tools:rating="3.7" />

@@ -7,21 +7,25 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.example.watchit_movieapp.Model.MediaItem
-import com.example.watchit_movieapp.adapters.MediaAdapter
+import androidx.fragment.app.Fragment
+
+
 import com.example.watchit_movieapp.databinding.ActivityMainBinding
-import com.example.watchit_movieapp.interfaces.FavoriteCallback
-import com.example.watchit_movieapp.utilities.RetrofitClient
-import com.example.watchit_movieapp.utilities.SignalManager
-import kotlinx.coroutines.launch
+import com.example.watchit_movieapp.fragments.HomeFragment
+import com.example.watchit_movieapp.fragments.ListsFragment
+import com.example.watchit_movieapp.fragments.ProfileFragment
+import com.example.watchit_movieapp.fragments.SearchFragment
+
 
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private lateinit var mediaAdapter: MediaAdapter
+
+
+    private val homeFragment = HomeFragment()
+    private val searchFragment = SearchFragment()
+    private val listsFragment = ListsFragment()
+    private val profileFragment = ProfileFragment()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -31,52 +35,55 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
             insets
         }
 
-        setupRecyclerView()
-        loadMovies()
-
-    }
-
-    private fun setupRecyclerView() {
-        mediaAdapter = MediaAdapter(emptyList(), isSearchMode = false)
-
-        mediaAdapter.favoriteCallback = object : FavoriteCallback {
-            override fun favoriteButtonClicked(movie: MediaItem, position: Int) {
-                // שימוש בפונקציית ה-toggle שבנית במודל
-                movie.toggleFavorite()
-
-                // עדכון ה-UI בשורה הספציפית
-                mediaAdapter.notifyItemChanged(position)
-                Log.d("TEST", "4. Adapter updated")
-            }
-        }
-        binding.RVMovieList.adapter = mediaAdapter
-        val linearLayoutManager = LinearLayoutManager(this)
-        linearLayoutManager.orientation = RecyclerView.VERTICAL
-        binding.RVMovieList.layoutManager = linearLayoutManager
-
-
-        }
-
-    private fun loadMovies() {
-        // שימוש ב-lifecycleScope כדי להריץ את ה-Retrofit ברקע
-        lifecycleScope.launch {
-            try {
-                val response = RetrofitClient.getPopularMovies()
-
-                if (response.results.isNotEmpty()) {
-                    // עדכון האדאפטר בנתונים האמיתיים
-                    Log.d("TEST", "Movies count: ${response.results.size}")
-                    mediaAdapter.updateData(response.results)
+        binding.bottomNavigation.setOnItemSelectedListener {
+            when (it.itemId) {
+                R.id.home -> {
+                    replaceFragment(homeFragment)
+                    Log.i("HOME","home selected")
                 }
-            } catch (e: Exception) {
-                Log.e("MainActivity", "Error fetching movies: ${e.message}")
-                SignalManager.getInstance().toast("Failed to load data", SignalManager.ToastLength.SHORT)
+                R.id.search -> {
+                    replaceFragment(searchFragment)
+                    Log.i("SEARCH","search selected")
+                }
+                R.id.watchlists -> {
+                    replaceFragment(listsFragment)
+                    Log.i("LISTS","lists selected")
+                }
+                R.id.profile -> {
+                    replaceFragment(profileFragment)
+                    Log.i("PROFILE","profile selected")
+                }
             }
+            true
         }
+
+        if(savedInstanceState == null) {
+            replaceFragment(homeFragment) // טוען את הפרגמנט
+            binding.bottomNavigation.selectedItemId = R.id.home // גורם לאייקון להפוך לצהוב
+        }
+
+
     }
+
+    fun navigateToSearch() {
+        binding.bottomNavigation.selectedItemId = R.id.search
+    }
+
+    private fun replaceFragment(fragment: Fragment){
+        val  transaction =supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container,fragment)
+
+        if (fragment !is HomeFragment) {
+            transaction.addToBackStack(null)
+        }
+
+        transaction.commit()
+    }
+
+
 
 }

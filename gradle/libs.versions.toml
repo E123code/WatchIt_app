@@ -13,8 +13,8 @@ constraintlayout = "2.2.1"
 glide = "5.0.5"
 google-services = "4.4.4"
 retrofit = "3.0.0"
-converter-gson = "2.9.0"
-splashscreen = "1.0.1"
+converter-gson = "3.0.0"
+splashscreen = "1.2.0"
 
 
 
