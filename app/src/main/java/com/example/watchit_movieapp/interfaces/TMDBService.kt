@@ -33,6 +33,14 @@ interface TMDBService {
         @Query("language") language: String = "en-US",
         @Query("append_to_response") append: String = "credits,watch/providers,release_dates,content_ratings"
     ): TitleDetails
+
+    @GET("search/multi")
+    suspend fun  SearchByName(
+        @Query("api_key") apiKey: String,
+        @Query("query") query: String
+    ): TMDBResponse
+
+
 }
 
 data class TMDBResponse(

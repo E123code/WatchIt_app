@@ -34,7 +34,7 @@ class ProviderAdapter : RecyclerView.Adapter<ProviderAdapter.ProviderViewHolder>
         with(holder){
             with(getItem(position)){
                 binding.ivProviderName.text =this.name
-                ImageLoader.getInstance().loadProfile(
+                ImageLoader.getInstance().loadImage(
                     fullLogoUrl,
                     binding.ProviderLogo
                 )

@@ -21,16 +21,22 @@ object RetrofitClient {
     }
 
     suspend fun getPopularMovies(page: Int = 1): TMDBResponse {
-       return instance.getPopularMovies(API_KEY)
+        val randomPage = (1..50).random()
+       return instance.getPopularMovies(API_KEY,page=randomPage)
     }
 
 
     suspend fun getPopularTVShows(page: Int = 1): TMDBResponse {
-        return instance.getPopularTVShows(API_KEY)
+        val randomPage = (1..50).random()
+        return instance.getPopularTVShows(API_KEY,page=randomPage)
     }
 
 
     suspend fun getDetails(id: Int, type: String) : TitleDetails{
         return  instance.getTitleDetails(type,id,API_KEY)
+    }
+
+    suspend fun searchByName(query: String) : TMDBResponse{
+        return instance.SearchByName(API_KEY,query)
     }
 }

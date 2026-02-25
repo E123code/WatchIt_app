@@ -17,9 +17,21 @@
         <item name="android:color" >@color/indicator_color</item>
     </style>
 
-    <style name="CircleImage" parent="">
+    <style name="SearchViewStyle" parent="Widget.AppCompat.SearchView">
+        <item name="android:editTextColor">@color/white</item>
+
+        <item name="colorControlActivated">@color/theme_yellow</item>
+
+        <item name="android:textColorHint">@color/grey_icon</item>
+
+        <item name="colorControlNormal">@color/white</item>
+    </style>
+
+    <style name="CircleImage">
         <item name="cornerSize">50%</item>
     </style>
+
+
 
 
 </resources>

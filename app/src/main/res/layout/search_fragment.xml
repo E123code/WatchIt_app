@@ -2,19 +2,143 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1565C0">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@color/fragment_background">
 
-    <RelativeLayout
+    <Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:background="@color/black"
+        app:layout_constraintTop_toTopOf="parent"
+        >
 
-        <ImageView
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:layout_centerInParent="true"
-            android:src="@drawable/search_btn"
-            />
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/search_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_gravity="center"
+            app:iconifiedByDefault="false"
+            android:clickable="true"
+            app:searchIcon="@null"
+            app:searchHintIcon="@null"
+            app:queryHint="@string/placeholder_search_content"
+            app:defaultQueryHint="@string/placeholder_search_content"
+            android:textDirection="ltr"
+            android:background="@drawable/search_bar_background"
+            app:closeIcon="@drawable/clear_btn"
+            app:theme="@style/SearchViewStyle"/>
+    </Toolbar>
 
-    </RelativeLayout>
+    <HorizontalScrollView
+        android:id="@+id/genresScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/default_margin"
+        android:scrollbars="none"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/toolbar">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupGenres"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            app:singleSelection="false"
+            app:selectionRequired="false">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipMovies"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:chipBackgroundColor="@color/theme_yellow"
+                android:textColor="@color/black"
+                android:checkable="true"
+                android:text="@string/movies" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipTV"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:chipBackgroundColor="@color/theme_yellow"
+                android:textColor="@color/black"
+                android:checkable="true"
+                android:text="@string/tv_shows" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipAction"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:chipBackgroundColor="@color/theme_yellow"
+                android:textColor="@color/black"
+                android:checkable="true"
+                android:text="Action" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipHorror"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:chipBackgroundColor="@color/theme_yellow"
+                android:textColor="@color/black"
+                android:checkable="true"
+                android:text="Horror" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipComedy"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:chipBackgroundColor="@color/theme_yellow"
+                android:textColor="@color/black"
+                android:checkable="true"
+                android:text="Comedy" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipDrama"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:chipBackgroundColor="@color/theme_yellow"
+                android:textColor="@color/black"
+                android:checkable="true"
+                android:text="Drama" />
+
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
+
+
+    <TextView
+        android:id="@+id/noResults_Notify"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/genresScrollView"
+        app:layout_constraintStart_toStartOf="parent"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        android:textSize="@dimen/default_title_size"
+        android:text="No results found"
+        android:visibility="gone"
+        />
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/results"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/genresScrollView"
+        android:layout_marginTop="20dp"
+        tools:listitem="@layout/media_item"/>
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

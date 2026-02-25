@@ -58,7 +58,7 @@
                     app:maxImageSize="35dp"
                     android:scaleType="center"
                     android:src="@drawable/empty_heart"
-                    app:tint="@color/white"
+                    app:tint="@color/theme_yellow"
                     app:backgroundTint="@color/cv_background" />
 
                 <com.google.android.material.button.MaterialButton
@@ -195,6 +195,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/default_margin"
                 android:layout_marginTop="@dimen/default_margin"
+                android:layout_marginBottom="@dimen/default_margin"
                 android:backgroundTint="@color/black"
                 android:contentDescription="Back"
                 android:scaleType="centerInside"

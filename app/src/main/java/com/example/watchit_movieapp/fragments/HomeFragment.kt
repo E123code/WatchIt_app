@@ -1,6 +1,5 @@
 package com.example.watchit_movieapp.fragments
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -9,16 +8,15 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.watchit_movieapp.DetailsActivity
 import com.example.watchit_movieapp.MainActivity
 import com.example.watchit_movieapp.model.MediaItem
 import com.example.watchit_movieapp.adapters.MediaAdapter
 import com.example.watchit_movieapp.databinding.HomeFragmentBinding
 import com.example.watchit_movieapp.interfaces.FavoriteCallback
 import com.example.watchit_movieapp.interfaces.MediaItemClickedCallback
-import com.example.watchit_movieapp.utilities.Constants
 import com.example.watchit_movieapp.utilities.RetrofitClient
 import com.example.watchit_movieapp.utilities.SignalManager
+import com.example.watchit_movieapp.utilities.openDetails
 import kotlinx.coroutines.launch
 
 class HomeFragment: Fragment() {
@@ -128,14 +126,7 @@ class HomeFragment: Fragment() {
         }
     }
 
-    private fun openDetails(item: MediaItem) {
-        val intent = Intent(requireContext(), DetailsActivity::class.java)
-        var bundle = Bundle()
-        bundle.putInt(Constants.bundlekeys.ID_KEY, item.id)
-        bundle.putString(Constants.bundlekeys.TYPE_KEY, item.mediaType) // "movie" או "tv" שהזרקנו ב-loadMovies/TV
-        intent.putExtras(bundle)
-        startActivity(intent)
-    }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

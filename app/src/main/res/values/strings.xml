@@ -11,4 +11,5 @@
     <string name="Title">Title</string>
     <string name="actorName">Actor Name</string>
     <string name="character">Character</string>
+    <string name="placeholder_search_content">what you want to watch?</string>
 </resources>
