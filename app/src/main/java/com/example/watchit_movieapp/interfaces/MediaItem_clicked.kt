@@ -2,7 +2,7 @@ package com.example.watchit_movieapp.interfaces
 
 import com.example.watchit_movieapp.model.MediaItem
 
-interface FavoriteCallback {
+interface MediaItemClickedCallback {
 
-    fun favoriteButtonClicked(title: MediaItem, position: Int)
+    fun mediaItemClicked(mediaItem: MediaItem)
 }

@@ -1,10 +1,10 @@
 
-package com.example.watchit_movieapp.Model
+package com.example.watchit_movieapp.model
 
 import com.google.gson.annotations.SerializedName
 
 data class MediaItem(
-    val id: Int = 0,
+    @SerializedName("id") val id: Int,
 
     @SerializedName("poster_path")
     val poster: String? = null,
@@ -22,7 +22,7 @@ data class MediaItem(
     val airDate: String? = null,
 
     @SerializedName("vote_average")
-    val rating: Float = 0f,
+    val rating: Double =0.0,
 
     @SerializedName("overview")
     val overview: String? = null,
@@ -31,7 +31,7 @@ data class MediaItem(
     val genreIds: List<Int>? = emptyList(),
 
     @SerializedName("media_type")
-    val mediaType: String? = null,
+    var mediaType: String? = null,
 
     @SerializedName("adult") val isAdult: Boolean = false,
 
@@ -45,7 +45,7 @@ data class MediaItem(
         get() = (relDate ?: airDate ?: "").take(4)
 
     val fullPosterUrl: String
-        get() = "https://image.tmdb.org/t/p/w500$poster"
+        get() = "https://image.tmdb.org/t/p/w500${poster}"
 
     val ageRating: String
         get() = if (isAdult) "18+" else "PG"

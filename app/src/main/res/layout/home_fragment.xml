@@ -24,7 +24,7 @@
             android:layout_height="wrap_content"
             android:text="@string/watch"
             android:textColor="@color/white"
-            android:textSize="24sp"
+            android:textSize="@dimen/default_title_size"
             android:textStyle="bold" />
 
         <TextView
@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:text="@string/it"
             android:textColor="@color/theme_yellow"
-            android:textSize="24sp"
+            android:textSize="@dimen/default_title_size"
             android:textStyle="bold" />
 
         <View

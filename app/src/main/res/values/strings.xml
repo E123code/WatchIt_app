@@ -8,4 +8,7 @@
     <string name="tv_shows">TV Shows</string>
     <string name="watch">Watch</string>
     <string name="it">it</string>
+    <string name="Title">Title</string>
+    <string name="actorName">Actor Name</string>
+    <string name="character">Character</string>
 </resources>

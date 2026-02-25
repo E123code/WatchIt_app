@@ -1,19 +1,23 @@
 package com.example.watchit_movieapp.adapters
 
-import android.util.Log
+
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.example.watchit_movieapp.R
 import androidx.recyclerview.widget.RecyclerView
-import com.example.watchit_movieapp.Model.MediaItem
+import com.example.watchit_movieapp.model.MediaItem
 import com.example.watchit_movieapp.databinding.MediaItemBinding
 import com.example.watchit_movieapp.interfaces.FavoriteCallback
+import com.example.watchit_movieapp.interfaces.MediaItemClickedCallback
 import com.example.watchit_movieapp.utilities.GenresMap
 import com.example.watchit_movieapp.utilities.ImageLoader
 
+
 class MediaAdapter(private var items: List<MediaItem> = emptyList(),
-                   private val isSearchMode: Boolean = false) : RecyclerView.Adapter<MediaAdapter.MediaViewHolder>(){
+                   private val isSearchMode: Boolean = false,
+                   private val callback: MediaItemClickedCallback) : RecyclerView.Adapter<MediaAdapter.MediaViewHolder>(){
+
 
     var favoriteCallback: FavoriteCallback? = null
 
@@ -41,7 +45,6 @@ class MediaAdapter(private var items: List<MediaItem> = emptyList(),
         ) {
             with(holder){
                 with(getItem(position)){
-                    Log.d("ADAPTER", "Binding movie at position: $position")
                     binding.Title.text = this.name
                     binding.releaseYear.text= this.date
                     binding.ageRating.text = this.ageRating
@@ -53,11 +56,14 @@ class MediaAdapter(private var items: List<MediaItem> = emptyList(),
                     }
                     binding.movieLBLGenres.text = GenresMap.getGenresString(this.genreIds)
                     binding.info.text= this.overview
-                    binding.ratingBar.rating = rating / 2
+                    binding.ratingBar.rating = (rating / 2).toFloat()
                     ImageLoader.getInstance().loadImage(
                         fullPosterUrl,
                         binding.IMGPoster
                     )
+                    binding.root.setOnClickListener{
+                        callback.mediaItemClicked(this)
+                    }
                     if (isFavorite) binding.IMGFavorite.setImageResource(R.drawable.heart)
                     else binding.IMGFavorite.setImageResource(R.drawable.empty_heart)
 
@@ -69,10 +75,10 @@ class MediaAdapter(private var items: List<MediaItem> = emptyList(),
         }
 
 
-        fun getItem(position: Int): MediaItem = items[position]// getting the high score by index
+        fun getItem(position: Int): MediaItem = items[position]
 
 
-        override fun getItemCount(): Int = items.size //amount of records
+        override fun getItemCount(): Int = items.size
 
 
     inner class MediaViewHolder(val binding: MediaItemBinding) :

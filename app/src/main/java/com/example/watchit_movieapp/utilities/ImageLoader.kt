@@ -58,4 +58,20 @@ class ImageLoader private constructor(context: Context) {
                 .into(imageView)
         }
     }
+
+    fun loadProfile(
+        source: String,
+        imageView: ImageView,
+        placeHolder: Int = R.drawable.round_profile_circle
+    ) {
+        contextRef.get()?.let{
+                context ->
+            Glide
+                .with(context)
+                .load(source)
+                .circleCrop()
+                .placeholder(placeHolder)
+                .into(imageView)
+        }
+    }
 }

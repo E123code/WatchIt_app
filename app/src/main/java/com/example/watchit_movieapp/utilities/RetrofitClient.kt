@@ -1,7 +1,9 @@
 package com.example.watchit_movieapp.utilities
 
 import com.example.watchit_movieapp.BuildConfig
+import com.example.watchit_movieapp.interfaces.TMDBResponse
 import com.example.watchit_movieapp.interfaces.TMDBService
+import com.example.watchit_movieapp.model.TitleDetails
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -18,9 +20,17 @@ object RetrofitClient {
         retrofit.create(TMDBService::class.java)
     }
 
-    suspend fun getPopularMovies(page: Int = 1) =
-        instance.getPopularMovies(API_KEY)
+    suspend fun getPopularMovies(page: Int = 1): TMDBResponse {
+       return instance.getPopularMovies(API_KEY)
+    }
 
-    suspend fun getPopularTVShows(page: Int = 1) =
-        instance.getPopularTVShows(API_KEY)
+
+    suspend fun getPopularTVShows(page: Int = 1): TMDBResponse {
+        return instance.getPopularTVShows(API_KEY)
+    }
+
+
+    suspend fun getDetails(id: Int, type: String) : TitleDetails{
+        return  instance.getTitleDetails(type,id,API_KEY)
+    }
 }
