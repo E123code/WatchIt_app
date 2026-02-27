@@ -1,15 +1,22 @@
 <resources>
-    <string name="app_name">WatchIt_movieapp</string>
-    <string name="home">Home</string>
-    <string name="search">Search</string>
-    <string name="watchlists">Watchlists</string>
-    <string name="profile">Profile</string>
-    <string name="movies">Movies</string>
-    <string name="tv_shows">TV Shows</string>
-    <string name="watch">Watch</string>
-    <string name="it">it</string>
-    <string name="Title">Title</string>
-    <string name="actorName">Actor Name</string>
-    <string name="character">Character</string>
-    <string name="placeholder_search_content">what you want to watch?</string>
+    <string name="app_name" translatable="false">WatchIt</string>
+    <string name="home" translatable="false">Home</string>
+    <string name="search" translatable="false">Search</string>
+    <string name="watchlists" translatable="false">Watchlists</string>
+    <string name="profile" translatable="false">Profile</string>
+    <string name="movies" translatable="false">Movies</string>
+    <string name="tv_shows" translatable="false">TV Shows</string>
+    <string name="watch" translatable="false">Watch</string>
+    <string name="it" translatable="false">it</string>
+    <string name="Title" translatable="false">Title</string>
+    <string name="actorName" translatable="false">Actor Name</string>
+    <string name="character" translatable="false">Character</string>
+    <string name="placeholder_search_content" translatable="false">what you want to watch?</string>
+
+    <!--for firebaseUI-->
+
+    <string name="fui_name_hint">Username</string>
+    <string name="fui_missing_first_and_last_name">Enter name</string>
+    <string name="my_lists">My Lists</string>
+    <string name="add_list_button">add list button</string>
 </resources>

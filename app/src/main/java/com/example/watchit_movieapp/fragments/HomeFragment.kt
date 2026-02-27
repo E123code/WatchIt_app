@@ -26,6 +26,9 @@ class HomeFragment: Fragment() {
 
     private lateinit var mediaAdapter: MediaAdapter
 
+    private var cachedMovies: List<MediaItem>? = null
+    private var cachedTVShows: List<MediaItem>? = null
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -51,10 +54,22 @@ class HomeFragment: Fragment() {
         setupTabsLogic()
     }
 
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden) {
+            Log.d("HomeFragment", "User returned to Home tab")
+
+            if (binding.rvMedia.adapter != null) {
+                mediaAdapter.notifyDataSetChanged()
+            }
+
+        }
+    }
+
     private fun setupRecyclerView() {
         val callback = object : MediaItemClickedCallback {
             override fun mediaItemClicked(mediaItem: MediaItem) {
-                // קריאה לפונקציה שכתבת למטה
+
                 openDetails(mediaItem)
             }
         }
@@ -94,6 +109,10 @@ class HomeFragment: Fragment() {
     }
 
     private fun loadMovies() {
+        if (cachedMovies != null) {
+            mediaAdapter.updateData(cachedMovies!!)
+            return
+        }
         // שימוש ב-lifecycleScope כדי להריץ את ה-Retrofit ברקע
         lifecycleScope.launch {
             try {
@@ -101,6 +120,7 @@ class HomeFragment: Fragment() {
 
                 if (response.results.isNotEmpty()) {
                     response.results.forEach { it.mediaType = "movie" }
+                    cachedMovies = response.results
                     mediaAdapter.updateData(response.results)
                 }
             } catch (e: Exception) {
@@ -111,12 +131,17 @@ class HomeFragment: Fragment() {
     }
 
     private fun loadTVShows() {
+        if (cachedTVShows != null) {
+            mediaAdapter.updateData(cachedTVShows!!)
+            return
+        }
         lifecycleScope.launch {
             try {
                 val response = RetrofitClient.getPopularTVShows()
 
                 if (response.results.isNotEmpty()) {
                     response.results.forEach { it.mediaType = "tv" }
+                    cachedTVShows = response.results
                     mediaAdapter.updateData(response.results)
                 }
             } catch (e: Exception) {

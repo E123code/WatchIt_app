@@ -24,11 +24,14 @@ import kotlinx.coroutines.launch
 
 class SearchFragment : Fragment() {
 
-    private lateinit var binding: SearchFragmentBinding
+    private var resultsList: List<MediaItem> = emptyList()
+
+    private var _binding: SearchFragmentBinding? = null
+    private val binding get() = _binding!!
 
     private lateinit var mediaAdapter: MediaAdapter
 
-    private var resultsList: List<MediaItem> = emptyList()
+
 
 
     override fun onCreateView(
@@ -36,16 +39,22 @@ class SearchFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
-        binding = SearchFragmentBinding.inflate(inflater, container, false)
+        _binding = SearchFragmentBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
         setupRecyclerView()
         setupSearchAndFilters()
+
+        if (resultsList.isNotEmpty()) {
+            mediaAdapter.updateData(resultsList)
+            binding.results.visibility = View.VISIBLE
+            binding.genresScrollView.visibility = View.VISIBLE
+
+        }
 
     }
 
@@ -56,7 +65,7 @@ class SearchFragment : Fragment() {
                 openDetails(mediaItem)
             }
         }
-        mediaAdapter = MediaAdapter(emptyList(), isSearchMode = false, callback)
+        mediaAdapter = MediaAdapter(emptyList(), isSearchMode = true, callback)
 
         mediaAdapter.favoriteCallback = object : FavoriteCallback {
             override fun favoriteButtonClicked(title: MediaItem, position: Int) {
@@ -84,7 +93,15 @@ class SearchFragment : Fragment() {
                 return true
             }
 
-            override fun onQueryTextChange(newText: String?): Boolean = true
+            override fun onQueryTextChange(newText: String?): Boolean {
+                if (newText.isNullOrEmpty()) {
+                    resultsList = emptyList()      // מנקים את רשימת המקור
+                    mediaAdapter.updateData(emptyList()) // מנקים את המסך
+                    binding.genresScrollView.visibility = View.GONE // מחביאים את המסננים
+                    binding.chipGroupGenres.clearCheck() // מורידים את כל הצ'יפים
+                }
+                return true
+            }
         })
 
 
@@ -158,6 +175,23 @@ class SearchFragment : Fragment() {
             matches
         }
         mediaAdapter.updateData(filteredList)
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden) {
+            if (::mediaAdapter.isInitialized) {
+                mediaAdapter.notifyDataSetChanged()
+            }
+        }
+    }
+
+
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+        // אנחנו לא מנקים את האדפטר כאן כי ב-show/hide ה-View נשאר
     }
 
 

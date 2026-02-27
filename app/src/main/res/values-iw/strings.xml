@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WatchIt</string>
+    <string name="fui_name_hint">שם משתמש</string>
+    <string name="fui_missing_first_and_last_name">"הכנס שם "</string>
+</resources>

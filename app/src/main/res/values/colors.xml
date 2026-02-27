@@ -10,6 +10,7 @@
     <color name="title_color">#EEEEEE</color>
     <color name="cv_text">#BDBDBD</color>
     <color name="indicator_color">#373737</color>
-    <color name="fragment_background">#1B1B1B</color>
+    <color name="theme_background">#1B1B1B</color>
+    <color name="listCard_background">#373737</color>
 
 </resources>

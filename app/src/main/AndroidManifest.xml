@@ -15,10 +15,10 @@
         android:supportsRtl="false"
         android:theme="@style/Theme.WatchIt_movieapp">
         <activity
-            android:name=".DetailsActivity"
+            android:name=".WatchlistActivity"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
+            android:name=".AuthLoginActivity"
             android:exported="true"
             android:theme="@style/Theme.AppStart">
             <intent-filter>
@@ -27,6 +27,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".DetailsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
