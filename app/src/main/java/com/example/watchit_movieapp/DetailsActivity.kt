@@ -103,10 +103,10 @@ class DetailsActivity : AppCompatActivity() {
         binding.releaseYearDurationLine.text = "${details.date} • ${details.duration}"
         binding.genresDetails.text = details.genres
         binding.ratingBar.rating = (details.rating/2).toFloat()
-        binding.userRating.visibility= View.GONE
 
-        val israelProviders = details.watchProviders?.results?.get("IL")?.membership
-        updateProviders(israelProviders)
+
+        val providers = details.watchProviders?.results?.get("IL")?.membership
+        updateProviders(providers)
 
         binding.Overview.text = details.overview
 

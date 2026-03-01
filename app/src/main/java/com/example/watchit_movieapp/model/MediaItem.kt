@@ -4,7 +4,7 @@ package com.example.watchit_movieapp.model
 import com.google.gson.annotations.SerializedName
 
 data class MediaItem(
-    @SerializedName("id") val id: Int,
+    @SerializedName("id") val id: String = "",
 
     @SerializedName("poster_path")
     val poster: String? = null,

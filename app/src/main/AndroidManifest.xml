@@ -15,6 +15,9 @@
         android:supportsRtl="false"
         android:theme="@style/Theme.WatchIt_movieapp">
         <activity
+            android:name=".SearchUsersActivity"
+            android:exported="false" />
+        <activity
             android:name=".WatchlistActivity"
             android:exported="false" />
         <activity

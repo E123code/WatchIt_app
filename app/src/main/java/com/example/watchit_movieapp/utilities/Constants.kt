@@ -15,9 +15,10 @@ object Constants {
 
 
     object FIRESTORE{
-        const val Watchlist_REF = "WatchLists"
+        const val WATCHLISTS_REF = "WatchLists"
         const val USERS_REF = "UsersList"
         const val FAVORITES = "Favorites"
+        const val TITLES_REF = "Titles"
     }
 
     object TAGS{

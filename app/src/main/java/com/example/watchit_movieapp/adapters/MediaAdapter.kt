@@ -2,24 +2,25 @@ package com.example.watchit_movieapp.adapters
 
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import com.example.watchit_movieapp.R
 import androidx.recyclerview.widget.RecyclerView
 import com.example.watchit_movieapp.model.MediaItem
 import com.example.watchit_movieapp.databinding.MediaItemBinding
-import com.example.watchit_movieapp.interfaces.FavoriteCallback
+import com.example.watchit_movieapp.interfaces.TitleCallback
 import com.example.watchit_movieapp.interfaces.MediaItemClickedCallback
+import com.example.watchit_movieapp.utilities.AdapterMode
 import com.example.watchit_movieapp.utilities.GenresMap
 import com.example.watchit_movieapp.utilities.ImageLoader
 
 
 class MediaAdapter(private var items: List<MediaItem> = emptyList(),
-                   private val isSearchMode: Boolean = false,
+                   private val mode: AdapterMode,
                    private val callback: MediaItemClickedCallback) : RecyclerView.Adapter<MediaAdapter.MediaViewHolder>(){
 
 
-    var favoriteCallback: FavoriteCallback? = null
+    var favoriteCallback: TitleCallback? = null
 
     fun updateData(newMedia: List<MediaItem>) {
         this.items = newMedia
@@ -48,12 +49,13 @@ class MediaAdapter(private var items: List<MediaItem> = emptyList(),
                     binding.Title.text = this.name
                     binding.releaseYear.text= this.date
                     binding.ageRating.text = this.ageRating
-                    if (isSearchMode) {
-                        binding.mediaType.visibility = View.VISIBLE
+                    binding.mediaType.isVisible = (mode != AdapterMode.HOME)
+                    binding.deleteBTN.isVisible = (mode == AdapterMode.MY_LIST)
+                    binding.IMGFavorite.isVisible = (mode != AdapterMode.FRIEND_MODE)
+                    if (binding.mediaType.isVisible) {
                         binding.mediaType.text = if (this.mediaType == "movie") "Movie" else "TV Series"
-                    } else {
-                        binding.mediaType.visibility = View.GONE
                     }
+
                     binding.movieLBLGenres.text = GenresMap.getGenresString(this.genreIds)
                     binding.info.text= this.overview
                     binding.ratingBar.rating = (rating / 2).toFloat()

@@ -12,8 +12,9 @@ import com.example.watchit_movieapp.MainActivity
 import com.example.watchit_movieapp.model.MediaItem
 import com.example.watchit_movieapp.adapters.MediaAdapter
 import com.example.watchit_movieapp.databinding.HomeFragmentBinding
-import com.example.watchit_movieapp.interfaces.FavoriteCallback
+import com.example.watchit_movieapp.interfaces.TitleCallback
 import com.example.watchit_movieapp.interfaces.MediaItemClickedCallback
+import com.example.watchit_movieapp.utilities.AdapterMode
 import com.example.watchit_movieapp.utilities.RetrofitClient
 import com.example.watchit_movieapp.utilities.SignalManager
 import com.example.watchit_movieapp.utilities.openDetails
@@ -73,9 +74,9 @@ class HomeFragment: Fragment() {
                 openDetails(mediaItem)
             }
         }
-        mediaAdapter = MediaAdapter(emptyList(), isSearchMode = false,callback)
+        mediaAdapter = MediaAdapter(emptyList(), AdapterMode.HOME,callback)
 
-        mediaAdapter.favoriteCallback = object : FavoriteCallback {
+        mediaAdapter.favoriteCallback = object : TitleCallback {
             override fun favoriteButtonClicked(title: MediaItem, position: Int) {
                 // שימוש בפונקציית ה-toggle שבנית במודל
                 title.toggleFavorite()

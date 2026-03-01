@@ -10,7 +10,7 @@ import com.example.watchit_movieapp.model.MediaItem
  fun Fragment.openDetails(item: MediaItem) {
     val intent = Intent(requireContext(), DetailsActivity::class.java)
     var bundle = Bundle()
-    bundle.putInt(Constants.bundlekeys.ID_KEY, item.id)
+    bundle.putInt(Constants.bundlekeys.ID_KEY, item.id.toInt())
     bundle.putString(Constants.bundlekeys.TYPE_KEY, item.mediaType) // "movie" או "tv" שהזרקנו ב-loadMovies/TV
     intent.putExtras(bundle)
     startActivity(intent)

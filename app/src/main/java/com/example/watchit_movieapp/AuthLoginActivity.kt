@@ -51,7 +51,7 @@ class AuthLoginActivity : AppCompatActivity() {
             insets
         }
 
-        initViews()
+
         if (FirebaseAuth.getInstance().currentUser != null) {
             transactToNextScreen()
         } else {
@@ -85,8 +85,9 @@ class AuthLoginActivity : AppCompatActivity() {
                     "Hello ${user?.displayName}",
                     SignalManager.ToastLength.SHORT
                 )
-                transactToNextScreen()
+
             }
+            transactToNextScreen()
         } else {
             if (response == null)
                 SignalManager.getInstance().toast("Login failed", SignalManager.ToastLength.SHORT)
