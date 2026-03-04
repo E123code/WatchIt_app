@@ -1,17 +1,24 @@
 package com.example.watchit_movieapp.fragments
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.watchit_movieapp.WatchlistActivity
 import com.example.watchit_movieapp.adapters.WatchlistAdapter
 import com.example.watchit_movieapp.databinding.ListsFragmentBinding
 import com.example.watchit_movieapp.interfaces.ListClickedCallback
 import com.example.watchit_movieapp.model.Watchlist
+import com.example.watchit_movieapp.utilities.AdapterMode
 import com.example.watchit_movieapp.utilities.FireStoreManager
+import com.example.watchit_movieapp.utilities.SignalManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.firestore.ListenerRegistration
 
 class ListsFragment : Fragment() {
@@ -71,22 +78,85 @@ class ListsFragment : Fragment() {
                 startActivity(intent)
             }
 
-            override fun deleteListClicked(watchlist: Watchlist, position: Int) {
-
+            override fun deleteListClicked(watchlist: Watchlist) {
+                showDeleteConfirmation(watchlist)
 
             }
         }
 
-
         val initialList = listOf(Watchlist(id = "FAVORITES_ID", "My Favorites", favCount))
 
-        watchlistAdapter = WatchlistAdapter(initialList, callback = callback)
+        watchlistAdapter = WatchlistAdapter(initialList, mode= AdapterMode.NATURAL,callback = callback)
+
+        binding.RVLists.adapter = watchlistAdapter
+        binding.RVLists.layoutManager = LinearLayoutManager(requireContext())
+    }
+
+    private fun showDeleteConfirmation(watchlist: Watchlist) {
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle("delete list")
+            .setMessage("Are you sure you want to delete '${watchlist.listName}'?")
+            .setPositiveButton("delete") { _, _ ->
+                FireStoreManager.deleteWatchlist(watchlist.id) { success ->
+                    if (success) {
+                        SignalManager.getInstance().toast("The list Deleted", SignalManager.ToastLength.SHORT)
+                    } else {
+                        SignalManager.getInstance().toast("Error", SignalManager.ToastLength.SHORT)
+                    }
+                }
+            }
+            .setNegativeButton("cancel", null)
+            .show()
+    }
+
+    private fun addList(){
+        val input = EditText(requireContext())
+        input.hint = "Enter list name"
+        input.setTextColor(Color.WHITE)
+        input.setHintTextColor(Color.GRAY)
+
+        val container = FrameLayout(requireContext())
+        val params = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        params.setMargins(60, 20, 60, 0)
+        input.layoutParams = params
+        container.addView(input)
+
+        val dialog = MaterialAlertDialogBuilder(requireContext(), com.google.android.material.R.style.ThemeOverlay_MaterialComponents_MaterialAlertDialog)
+            .setMessage("Enter watchlist name")
+            .setView(container)
+            .setPositiveButton("Create") { _, _ ->
+                val listName = input.text.toString().trim()
+                if (listName.isNotEmpty()) {
+                    createNewList(listName)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        dialog.show()
+
+    }
+
+    private fun createNewList(listName: String){
+        FireStoreManager.addWatchList(listName){ success ->
+            if (success) {
+                SignalManager.getInstance().toast("Watchlist created!", SignalManager.ToastLength.SHORT)
+            } else {
+                SignalManager.getInstance().toast("Error creating list", SignalManager.ToastLength.SHORT)
+            }
+        }
     }
 
 
     override fun onResume() {
         super.onResume()
     }
+
+
+
 
     override fun onDestroyView() {
         super.onDestroyView()

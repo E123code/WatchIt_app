@@ -51,8 +51,8 @@ class DetailsActivity : AppCompatActivity() {
         val id = bundle?.getInt(Constants.bundlekeys.ID_KEY, -1) ?: -1
         val type = bundle?.getString(Constants.bundlekeys.TYPE_KEY) ?: "movie"
 
-        Log.d("TEST_DETAILS", "Received ID: $id")
-        Log.d("TEST_DETAILS", "Received Type: $type")
+        Log.d(Constants.logMessage.DETAILS_KEY, "Received ID: $id")
+        Log.d(Constants.logMessage.DETAILS_KEY, "Received Type: $type")
 
         setupRecyclerViews()
 

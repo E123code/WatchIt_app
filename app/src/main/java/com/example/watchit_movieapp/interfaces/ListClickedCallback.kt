@@ -5,5 +5,5 @@ import com.example.watchit_movieapp.model.Watchlist
 
 interface ListClickedCallback {
     fun watchlistClicked(watchlist: Watchlist)
-    fun deleteListClicked(watchlist: Watchlist, position: Int)
+    fun deleteListClicked(watchlist: Watchlist)
 }

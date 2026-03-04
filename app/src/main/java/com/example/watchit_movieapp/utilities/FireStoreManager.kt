@@ -309,7 +309,7 @@ object FireStoreManager {
                     val rating = document.getDouble("myRating")?.toFloat()
                     onResult(rating)
                 } else {
-                    onResult(null)
+                    onResult(0f)
                 }
             }
             .addOnFailureListener {

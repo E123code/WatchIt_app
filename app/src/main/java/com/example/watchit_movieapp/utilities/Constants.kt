@@ -9,7 +9,7 @@ object Constants {
 
     object logMessage{
 
-
+        const val DETAILS_KEY = "DETAILS"
         const val FIRESTORE_KEY = "FIRESTORE"
     }
 
