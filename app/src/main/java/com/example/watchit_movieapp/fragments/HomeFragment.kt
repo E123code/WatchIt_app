@@ -15,9 +15,11 @@ import com.example.watchit_movieapp.databinding.HomeFragmentBinding
 import com.example.watchit_movieapp.interfaces.TitleCallback
 import com.example.watchit_movieapp.interfaces.MediaItemClickedCallback
 import com.example.watchit_movieapp.utilities.AdapterMode
+import com.example.watchit_movieapp.utilities.FireStoreManager
 import com.example.watchit_movieapp.utilities.RetrofitClient
 import com.example.watchit_movieapp.utilities.SignalManager
 import com.example.watchit_movieapp.utilities.openDetails
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 
 class HomeFragment: Fragment() {
@@ -30,6 +32,10 @@ class HomeFragment: Fragment() {
     private var cachedMovies: List<MediaItem>? = null
     private var cachedTVShows: List<MediaItem>? = null
 
+    private var userListener: ListenerRegistration? = null
+
+    private var currentFavoriteIds: List<String> = emptyList()
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -37,20 +43,26 @@ class HomeFragment: Fragment() {
         _binding = HomeFragmentBinding.inflate(inflater, container, false)
         return binding.root
     }
+
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-
         setupRecyclerView()
+
+        userListener = FireStoreManager.loadCurrentUser { user ->
+            currentFavoriteIds = user.favorites
+
+            cachedMovies?.forEach { it.isFavorite = currentFavoriteIds.contains(it.id) }
+            cachedTVShows?.forEach { it.isFavorite = currentFavoriteIds.contains(it.id) }
+            mediaAdapter.notifyDataSetChanged()
+        }
 
 
         loadMovies()
 
-
         binding.BTNSearch.setOnClickListener {
             (activity as? MainActivity)?.navigateToSearch()
         }
-
 
         setupTabsLogic()
     }
@@ -76,14 +88,44 @@ class HomeFragment: Fragment() {
         }
         mediaAdapter = MediaAdapter(emptyList(), AdapterMode.HOME,callback)
 
-        mediaAdapter.favoriteCallback = object : TitleCallback {
+        mediaAdapter.titleCallback = object : TitleCallback {
             override fun favoriteButtonClicked(title: MediaItem, position: Int) {
-                // שימוש בפונקציית ה-toggle שבנית במודל
+                val previous = title.isFavorite
                 title.toggleFavorite()
-
-                // עדכון ה-UI בשורה הספציפית
+                SignalManager.getInstance().vibrate()
                 mediaAdapter.notifyItemChanged(position)
-                Log.d("TEST", "4. Adapter updated")
+
+                if (title.isFavorite) {
+                    FireStoreManager.addFavorite(title) { success ->
+                        if (!success) {
+                            title.isFavorite = previous
+                            mediaAdapter.notifyItemChanged(position)
+                            SignalManager.getInstance()
+                                .toast("Connection error", SignalManager.ToastLength.SHORT)
+                        } else {
+                            SignalManager.getInstance()
+                                .toast("added to favorites", SignalManager.ToastLength.SHORT)
+                        }
+
+                    }
+                } else {
+                    FireStoreManager.deleteFavorite(title.id) { success ->
+                        if (!success) {
+                            title.isFavorite = previous
+                            mediaAdapter.notifyItemChanged(position)
+                        } else {
+                            SignalManager.getInstance()
+                                .toast("deleted from favorites", SignalManager.ToastLength.SHORT)
+                        }
+                    }
+                }
+            }
+
+            override fun deleteButtonClicked(
+                item: MediaItem,
+                position: Int
+            ) {
+
             }
         }
 
@@ -99,8 +141,8 @@ class HomeFragment: Fragment() {
         binding.homeTabLayout.addOnTabSelectedListener(object : com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab?) {
                 when (tab?.position) {
-                    0 -> loadMovies()    // טאב Movies
-                    1 -> loadTVShows()   // טאב TV Shows
+                    0 -> loadMovies()
+                    1 -> loadTVShows()
                 }
             }
 
@@ -120,7 +162,10 @@ class HomeFragment: Fragment() {
                 val response = RetrofitClient.getPopularMovies()
 
                 if (response.results.isNotEmpty()) {
-                    response.results.forEach { it.mediaType = "movie" }
+                    response.results.forEach {
+                        it.mediaType = "movie"
+                        it.isFavorite = currentFavoriteIds.contains(it.id)
+                    }
                     cachedMovies = response.results
                     mediaAdapter.updateData(response.results)
                 }
@@ -141,7 +186,10 @@ class HomeFragment: Fragment() {
                 val response = RetrofitClient.getPopularTVShows()
 
                 if (response.results.isNotEmpty()) {
-                    response.results.forEach { it.mediaType = "tv" }
+                    response.results.forEach {
+                        it.mediaType = "tv"
+                        it.isFavorite = currentFavoriteIds.contains(it.id)
+                    }
                     cachedTVShows = response.results
                     mediaAdapter.updateData(response.results)
                 }
@@ -152,11 +200,19 @@ class HomeFragment: Fragment() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (::mediaAdapter.isInitialized) {
+            mediaAdapter.notifyDataSetChanged()
+        }
+    }
+
 
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null // חשוב למניעת זליגת זיכרון
+        userListener?.remove()
+        _binding = null
     }
 
 }

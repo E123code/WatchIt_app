@@ -17,4 +17,6 @@
     <dimen name="favorite_icon_size">28dp</dimen>
     <dimen name="detailed_card_width">150dp</dimen>
     <dimen name="detailed_card_height">225dp</dimen>
+    <dimen name="profile_picture_width">70dp</dimen>
+    <dimen name="profile_picture_height">70dp</dimen>
 </resources>

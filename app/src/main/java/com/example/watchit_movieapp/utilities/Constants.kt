@@ -19,6 +19,8 @@ object Constants {
         const val USERS_REF = "UsersList"
         const val FAVORITES = "Favorites"
         const val TITLES_REF = "Titles"
+
+        const val RATINGS = "Ratings"
     }
 
     object TAGS{

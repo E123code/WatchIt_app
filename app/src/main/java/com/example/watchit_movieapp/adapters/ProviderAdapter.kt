@@ -27,18 +27,18 @@ class ProviderAdapter : RecyclerView.Adapter<ProviderAdapter.ProviderViewHolder>
             )
         return ProviderViewHolder(binding)
     }
+
     override fun onBindViewHolder(
         holder: ProviderAdapter.ProviderViewHolder,
         position: Int
     ) {
-        with(holder){
-            with(getItem(position)){
-                binding.ivProviderName.text =this.name
+        with(holder) {
+            with(getItem(position)) {
+                binding.ivProviderName.text = this.name
                 ImageLoader.getInstance().loadImage(
                     fullLogoUrl,
                     binding.ProviderLogo
                 )
-
 
 
             }

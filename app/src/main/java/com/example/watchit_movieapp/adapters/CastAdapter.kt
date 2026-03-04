@@ -3,8 +3,8 @@ package com.example.watchit_movieapp.adapters
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.example.watchit_movieapp.model.CastMember
 import com.example.watchit_movieapp.databinding.CastMemberBinding
+import com.example.watchit_movieapp.model.CastMember
 import com.example.watchit_movieapp.utilities.ImageLoader
 
 
@@ -16,6 +16,7 @@ class CastAdapter : RecyclerView.Adapter<CastAdapter.CastViewHolder>() {
         this.castList = newList ?: emptyList()
         notifyDataSetChanged()
     }
+
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
@@ -28,19 +29,19 @@ class CastAdapter : RecyclerView.Adapter<CastAdapter.CastViewHolder>() {
             )
         return CastViewHolder(binding)
     }
+
     override fun onBindViewHolder(
         holder: CastAdapter.CastViewHolder,
         position: Int
     ) {
-        with(holder){
-            with(getItem(position)){
+        with(holder) {
+            with(getItem(position)) {
                 binding.CastName.text = this.name
-                binding.CharacterName.text= this.character
+                binding.CharacterName.text = this.character
                 ImageLoader.getInstance().loadProfile(
                     fullCastUrl,
                     binding.CastProfileIMG
                 )
-
 
 
             }

@@ -5,6 +5,6 @@ data class User(
     val username: String = "",
     val email: String = "",
     val profileImageUrl: String = "",
-    val favorites: List<Int> = emptyList(), // רשימת ה-IDs של האהובים
-    val friendsList: HashSet<String> = hashSetOf<String>()
+    val favorites: List<String> = emptyList(),
+    val friendsList: List<String> = emptyList()
 )

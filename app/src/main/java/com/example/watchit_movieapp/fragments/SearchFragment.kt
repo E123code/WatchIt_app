@@ -16,10 +16,12 @@ import com.example.watchit_movieapp.interfaces.TitleCallback
 import com.example.watchit_movieapp.interfaces.MediaItemClickedCallback
 import com.example.watchit_movieapp.model.MediaItem
 import com.example.watchit_movieapp.utilities.AdapterMode
+import com.example.watchit_movieapp.utilities.FireStoreManager
 import com.example.watchit_movieapp.utilities.GenresMap
 import com.example.watchit_movieapp.utilities.RetrofitClient
 import com.example.watchit_movieapp.utilities.SignalManager
 import com.example.watchit_movieapp.utilities.openDetails
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 
 
@@ -32,7 +34,8 @@ class SearchFragment : Fragment() {
 
     private lateinit var mediaAdapter: MediaAdapter
 
-
+    private var favoritesListener: ListenerRegistration? = null
+    private var currentFavoriteIds: List<String> = emptyList()
 
 
     override fun onCreateView(
@@ -48,6 +51,17 @@ class SearchFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupRecyclerView()
+
+        favoritesListener = FireStoreManager.loadCurrentUser { user ->
+            currentFavoriteIds = user.favorites
+
+            resultsList.forEach { it.isFavorite = currentFavoriteIds.contains(it.id) }
+
+            if (::mediaAdapter.isInitialized) {
+                mediaAdapter.notifyDataSetChanged()
+            }
+        }
+
         setupSearchAndFilters()
 
         if (resultsList.isNotEmpty()) {
@@ -68,14 +82,44 @@ class SearchFragment : Fragment() {
         }
         mediaAdapter = MediaAdapter(emptyList(), AdapterMode.NATURAL,callback=callback)
 
-        mediaAdapter.favoriteCallback = object : TitleCallback {
+        mediaAdapter.titleCallback = object : TitleCallback {
             override fun favoriteButtonClicked(title: MediaItem, position: Int) {
-                // שימוש בפונקציית ה-toggle שבנית במודל
+                val previous = title.isFavorite
                 title.toggleFavorite()
-
-                // עדכון ה-UI בשורה הספציפית
+                SignalManager.getInstance().vibrate()
                 mediaAdapter.notifyItemChanged(position)
-                Log.d("TEST", "4. Adapter updated")
+
+                if (title.isFavorite) {
+                    FireStoreManager.addFavorite(title) { success ->
+                        if (!success) {
+                            title.isFavorite = previous
+                            mediaAdapter.notifyItemChanged(position)
+                            SignalManager.getInstance()
+                                .toast("Connection error", SignalManager.ToastLength.SHORT)
+                        } else {
+                            SignalManager.getInstance()
+                                .toast("added to favorites", SignalManager.ToastLength.SHORT)
+                        }
+
+                    }
+                } else {
+                    FireStoreManager.deleteFavorite(title.id) { success ->
+                        if (!success) {
+                            title.isFavorite = previous
+                            mediaAdapter.notifyItemChanged(position)
+                        } else {
+                            SignalManager.getInstance()
+                                .toast("deleted from favorites", SignalManager.ToastLength.SHORT)
+                        }
+                    }
+                }
+            }
+
+            override fun deleteButtonClicked(
+                item: MediaItem,
+                position: Int
+            ) {
+
             }
         }
 
@@ -88,7 +132,7 @@ class SearchFragment : Fragment() {
         binding.searchBar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 if (!query.isNullOrEmpty()) {
-                    performSearch(query) // פונקציה שתביא נתונים מה-API
+                    performSearch(query)
                     binding.searchBar.clearFocus()
                 }
                 return true
@@ -96,17 +140,17 @@ class SearchFragment : Fragment() {
 
             override fun onQueryTextChange(newText: String?): Boolean {
                 if (newText.isNullOrEmpty()) {
-                    resultsList = emptyList()      // מנקים את רשימת המקור
-                    mediaAdapter.updateData(emptyList()) // מנקים את המסך
-                    binding.genresScrollView.visibility = View.GONE // מחביאים את המסננים
-                    binding.chipGroupGenres.clearCheck() // מורידים את כל הצ'יפים
+                    resultsList = emptyList()
+                    mediaAdapter.updateData(emptyList())
+                    binding.genresScrollView.visibility = View.GONE
+                    binding.chipGroupGenres.clearCheck()
                 }
                 return true
             }
         })
 
 
-        // 2. סינון לפי צ'יפים
+
         binding.chipGroupGenres.setOnCheckedStateChangeListener { _, checkedIds ->
             applyFilters(checkedIds)
         }
@@ -120,6 +164,8 @@ class SearchFragment : Fragment() {
 
                 resultsList =
                     response.results.filter { mediaItem -> mediaItem.mediaType == "tv" || mediaItem.mediaType == "movie" }
+
+                resultsList.forEach { it.isFavorite = currentFavoriteIds.contains(it.id) }
 
                 binding.genresScrollView.visibility = View.VISIBLE
                 binding.chipGroupGenres.clearCheck()
@@ -157,10 +203,8 @@ class SearchFragment : Fragment() {
                     binding.chipGroupGenres.findViewById<com.google.android.material.chip.Chip>(
                         chipId
                     )
-                val chipText = chip.text.toString()
-
                 // search by text
-                when (chipText) {
+                when (val chipText = chip.text.toString()) {
                     getString(R.string.movies) -> if (item.mediaType != "movie") matches = false
                     getString(R.string.tv_shows) -> if (item.mediaType != "tv") matches = false
 
@@ -187,12 +231,18 @@ class SearchFragment : Fragment() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
 
+        if (::mediaAdapter.isInitialized) {
+            mediaAdapter.notifyDataSetChanged()
+        }
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        favoritesListener?.remove()
         _binding = null
-        // אנחנו לא מנקים את האדפטר כאן כי ב-show/hide ה-View נשאר
     }
 
 

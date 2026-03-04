@@ -18,17 +18,18 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:background="@color/listCard_background">
 
             <ImageView
-                android:id="@+id/ivListImage"
+                android:id="@+id/ListImage"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:src="@drawable/movie_list"
-                android:scaleType="centerCrop" />
+                android:scaleType="centerCrop"
+                android:contentDescription="List Icon of movie clipper"/>
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -50,20 +51,16 @@
                     android:id="@+id/Item_Count_LBL"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="12 movies"
+                    android:text="12 titles"
                     android:textColor="@color/cv_text"
                     android:textSize="@dimen/card_text_size"
-                    android:visibility="gone"/>
+                    android:visibility="visible"/>
 
-                <ProgressBar
-                    android:id="@+id/progressBar"
-                    style="?android:attr/progressBarStyle"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp" />
+
             </LinearLayout>
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/BTN_add_list"
+                android:id="@+id/BTN_deleteList"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="0.1"

@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:name=".App"
@@ -14,6 +15,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="false"
         android:theme="@style/Theme.WatchIt_movieapp">
+        <activity
+            android:name=".FriendProfileActivity"
+            android:exported="false" />
         <activity
             android:name=".SearchUsersActivity"
             android:exported="false" />

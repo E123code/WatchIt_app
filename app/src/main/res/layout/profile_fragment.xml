@@ -15,15 +15,82 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/iProfile_IMG"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/image_upload"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
             android:layout_marginStart="40dp"
-            android:layout_marginTop="40dp"
-            android:src="@drawable/round_profile_circle"
-            app:shapeAppearanceOverlay="@style/CircleImage" />
+            android:layout_marginTop="40dp">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/Profile_IMG"
+                android:layout_width="@dimen/profile_picture_width"
+                android:layout_height="@dimen/profile_picture_height"
+                android:src="@drawable/round_profile_circle"
+                app:shapeAppearanceOverlay="@style/CircleImage" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/Upload_BTN"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/theme_yellow"
+                android:textSize="@dimen/card_text_size"
+                android:text="@string/uploadBTN"
+                android:textColor="@color/black"
+                android:layout_marginTop="@dimen/default_margin"
+                />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/details"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:layout_marginStart="@dimen/default_margin"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/Name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/default_margin"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:text="@string/user_name"
+                android:textColor="@color/white"
+                android:textSize="@dimen/detail_text_size"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:text="@string/email"
+                android:textColor="@color/cv_text"
+                android:textSize="@dimen/detail_text_size"
+                android:textStyle="bold" />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
     </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <TextView
+        android:id="@+id/friendsTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/Profile_layout"
+        android:text="Friends"
+        android:layout_marginTop="@dimen/default_margin"
+
+
+        />
+
+
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

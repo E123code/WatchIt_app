@@ -9,8 +9,8 @@
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/CastProfile_IMG"
-        android:layout_width="90dp"
-        android:layout_height="90dp"
+        android:layout_width="@dimen/profile_picture_width"
+        android:layout_height="@dimen/profile_picture_height"
         android:scaleType="centerCrop"
         android:src="@drawable/round_profile_circle"
         app:shapeAppearanceOverlay="@style/CircleImage" />
@@ -36,6 +36,6 @@
         android:minLines="1"
         android:text="@string/character"
         android:textColor="@color/cv_text"
-        android:textSize="16dp" />
+        android:textSize="16sp" />
 
 </LinearLayout>

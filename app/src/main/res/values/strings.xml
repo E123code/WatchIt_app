@@ -17,6 +17,9 @@
 
     <string name="fui_name_hint">Username</string>
     <string name="fui_missing_first_and_last_name">Enter name</string>
-    <string name="my_lists">My Lists</string>
-    <string name="add_list_button">add list button</string>
+    <string name="my_lists" translatable="false">My Lists</string>
+    <string name="add_list_button" translatable="false">add list button</string>
+    <string name="user_name" translatable="false">User name</string>
+    <string name="email" translatable="false">email</string>
+    <string name="uploadBTN" translatable="false">upload</string>
 </resources>
