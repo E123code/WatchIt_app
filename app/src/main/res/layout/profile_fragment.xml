@@ -20,8 +20,8 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-            android:layout_marginStart="40dp"
-            android:layout_marginTop="40dp">
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="30dp">
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/Profile_IMG"
@@ -47,7 +47,7 @@
             android:id="@+id/details"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="50dp"
+            android:layout_marginTop="40dp"
             android:layout_marginStart="@dimen/default_margin"
             android:orientation="vertical">
             <TextView
@@ -83,7 +83,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginStart="40dp"
+        android:layout_marginStart="30dp"
         android:layout_marginTop="24dp"
         android:gravity="center_vertical"
         app:layout_constraintStart_toStartOf="parent"
@@ -93,7 +93,7 @@
             android:id="@+id/friendsTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Friends"
+            android:text="@string/friends"
             android:textSize="@dimen/default_title_size"
             android:textColor="@color/white"
             android:textStyle="bold"
@@ -105,7 +105,7 @@
             android:layout_height="wrap_content"
             android:backgroundTint="@color/theme_yellow"
             android:textSize="@dimen/card_text_size"
-            android:text="Search users"
+            android:text="@string/search_users"
             android:textColor="@color/black"
             android:layout_marginStart="@dimen/default_margin"
             />
@@ -118,23 +118,38 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
-        android:layout_marginHorizontal="40dp"
+        android:layout_marginHorizontal="30dp"
         android:layout_marginBottom="16dp"
         android:clipToPadding="false"
-        app:layout_constraintBottom_toTopOf="@id/Logout_BTN"
+        app:layout_constraintBottom_toTopOf="@id/logout_BTN"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/friendsHeader"
-        tools:listitem="@layout/user" />
+        tools:listitem="@layout/user"
+        android:visibility="gone"/>
+
+
+    <TextView
+        android:id="@+id/No_Friends_LBL"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/friendsHeader"
+        android:text="@string/no_friends_yet"
+        android:textColor="@color/grey_icon"
+        android:textSize="@dimen/default_title_size"
+        android:textStyle="bold"/>
 
     <com.google.android.material.button.MaterialButton
-    android:id="@+id/Logout_BTN"
+    android:id="@+id/logout_BTN"
     android:layout_width="0dp"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="40dp"
+    android:layout_marginHorizontal="30dp"
     android:layout_marginBottom="32dp"
     android:backgroundTint="@color/theme_yellow"
-    android:text="Logout"
+    android:text="@string/logout"
     android:textColor="@color/black"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"

@@ -15,6 +15,7 @@ import com.example.watchit_movieapp.databinding.HomeFragmentBinding
 import com.example.watchit_movieapp.interfaces.TitleCallback
 import com.example.watchit_movieapp.interfaces.MediaItemClickedCallback
 import com.example.watchit_movieapp.utilities.AdapterMode
+import com.example.watchit_movieapp.utilities.Constants
 import com.example.watchit_movieapp.utilities.FireStoreManager
 import com.example.watchit_movieapp.utilities.RetrofitClient
 import com.example.watchit_movieapp.utilities.SignalManager
@@ -49,13 +50,6 @@ class HomeFragment: Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
 
-        userListener = FireStoreManager.loadCurrentUser { user ->
-            currentFavoriteIds = user.favorites
-
-            cachedMovies?.forEach { it.isFavorite = currentFavoriteIds.contains(it.id) }
-            cachedTVShows?.forEach { it.isFavorite = currentFavoriteIds.contains(it.id) }
-            mediaAdapter.notifyDataSetChanged()
-        }
 
 
         loadMovies()
@@ -67,15 +61,40 @@ class HomeFragment: Fragment() {
         setupTabsLogic()
     }
 
+
+    private fun  startUserListen(){
+
+        if (userListener != null) return
+
+        userListener = FireStoreManager.loadCurrentUser { user ->
+            currentFavoriteIds = user.favorites
+
+            cachedMovies?.forEach { it.isFavorite = currentFavoriteIds.contains(it.id) }
+            cachedTVShows?.forEach { it.isFavorite = currentFavoriteIds.contains(it.id) }
+            if (::mediaAdapter.isInitialized) {
+                mediaAdapter.notifyDataSetChanged()
+            }
+        }
+
+    }
+
+    private fun stopUserListen() {
+        userListener?.remove()
+        userListener = null
+    }
+
+
+
+
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
         if (!hidden) {
-            Log.d("HomeFragment", "User returned to Home tab")
+            Log.d(Constants.logMessage.HOME_KEY, "User returned to Home tab")
 
-            if (binding.rvMedia.adapter != null) {
-                mediaAdapter.notifyDataSetChanged()
-            }
+            startUserListen()
 
+        }else{
+            stopUserListen()
         }
     }
 
@@ -202,12 +221,15 @@ class HomeFragment: Fragment() {
 
     override fun onResume() {
         super.onResume()
-        if (::mediaAdapter.isInitialized) {
-            mediaAdapter.notifyDataSetChanged()
+        if (!isHidden) {
+            startUserListen()
         }
     }
 
-
+    override fun onPause() {
+        super.onPause()
+        stopUserListen()
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()

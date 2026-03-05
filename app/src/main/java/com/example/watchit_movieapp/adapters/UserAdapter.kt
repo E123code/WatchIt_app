@@ -45,7 +45,7 @@ class UserAdapter(
                     binding.friendIMG
                 )
                 binding.root.setOnClickListener {
-                    callback.userClicked(this)
+                    callback.userClicked(this.uid)
                 }
             }
         }

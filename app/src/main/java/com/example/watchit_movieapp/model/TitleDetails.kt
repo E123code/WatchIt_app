@@ -9,10 +9,10 @@ data class TitleDetails(
     val poster: String? = null,
 
     @SerializedName("title")
-    val title: String? = null, // הורדנו private
+    val title: String? = null,
 
     @SerializedName("name")
-    val tvName: String? = null, // הורדנו private
+    val tvName: String? = null,
 
     @SerializedName("release_date")
     val relDate: String? = null,
@@ -35,9 +35,8 @@ data class TitleDetails(
     @SerializedName("runtime")
     val runtime: Int?,
     @SerializedName("number_of_seasons")
-    val numberOfSeasons: Int?, // רק בסדרות
+    val numberOfSeasons: Int?,
 
-    // הרחבות (append_to_response)
     @SerializedName("credits") val credits: CreditsResponse?,
     @SerializedName("watch/providers") val watchProviders: WatchProvidersResponse?,
 
@@ -50,7 +49,7 @@ data class TitleDetails(
         get() = when (mediaType) {
             "movie" -> title ?: "Unknown Movie"
             "tv" -> tvName ?: "Unknown TV Show"
-            else -> title ?: tvName ?: "Unknown" // Fallback ליתר ביטחון
+            else -> title ?: tvName ?: "Unknown"
         }
 
     val date: String
@@ -78,11 +77,11 @@ data class TitleDetails(
     val ageRating: String
         get() {
 
-            val countriesToSearch = listOf("IL", "DE") // סדר עדיפויות: קודם ישראל, אז גרמניה
+            val countriesToSearch = listOf("IL", "DE")
 
             val rawRating = when (mediaType) {
                 "movie" -> {
-                    // מחפש את המדינה הראשונה מהרשימה שקיימת בתוצאות
+
                     val result = countriesToSearch.firstNotNullOfOrNull { code ->
                         releaseDates?.results?.find { it.countryCode == code }
                     }
@@ -101,9 +100,9 @@ data class TitleDetails(
             // לוגיקת התצוגה
             return when {
                 rawRating.isNullOrEmpty() -> "N/A"
-                rawRating == "0" || rawRating == "6" -> "All" // בגרמניה 0 ו-6 הם לכל הגילאים
-                rawRating.all { it.isDigit() } -> "$rawRating+" // אם זה מספר (כמו 12), נוסיף פלוס
-                else -> rawRating // אם זה טקסט (כמו בשלוחות אחרות), נציג כפי שהוא
+                rawRating == "0" || rawRating == "6" -> "All"
+                rawRating.all { it.isDigit() } -> "$rawRating+"
+                else -> rawRating
             }
         }
 

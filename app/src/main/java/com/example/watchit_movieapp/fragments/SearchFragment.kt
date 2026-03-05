@@ -52,15 +52,7 @@ class SearchFragment : Fragment() {
 
         setupRecyclerView()
 
-        favoritesListener = FireStoreManager.loadCurrentUser { user ->
-            currentFavoriteIds = user.favorites
 
-            resultsList.forEach { it.isFavorite = currentFavoriteIds.contains(it.id) }
-
-            if (::mediaAdapter.isInitialized) {
-                mediaAdapter.notifyDataSetChanged()
-            }
-        }
 
         setupSearchAndFilters()
 
@@ -224,19 +216,48 @@ class SearchFragment : Fragment() {
 
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
-        if (!hidden) {
+        if (hidden) {
+            stopFavoritesListen()
+        }else{
+            startFavoritesListen()
+        }
+    }
+
+
+    private fun startFavoritesListen(){
+        if (favoritesListener != null ) return
+
+        favoritesListener = FireStoreManager.loadCurrentUser { user ->
+            currentFavoriteIds = user.favorites
+
+            resultsList.forEach { it.isFavorite = currentFavoriteIds.contains(it.id) }
+
             if (::mediaAdapter.isInitialized) {
                 mediaAdapter.notifyDataSetChanged()
             }
         }
     }
 
+    private fun stopFavoritesListen() {
+        favoritesListener?.remove()
+        favoritesListener = null
+    }
+
     override fun onResume() {
         super.onResume()
 
-        if (::mediaAdapter.isInitialized) {
-            mediaAdapter.notifyDataSetChanged()
+        if (!isHidden) {
+            startFavoritesListen()
         }
+    }
+
+
+
+
+
+    override fun onPause() {
+        super.onPause()
+        stopFavoritesListen()
     }
 
     override fun onDestroyView() {

@@ -6,7 +6,6 @@ import androidx.fragment.app.Fragment
 import com.example.watchit_movieapp.DetailsActivity
 import com.example.watchit_movieapp.model.MediaItem
 
-
  fun Fragment.openDetails(item: MediaItem) {
     val intent = Intent(requireContext(), DetailsActivity::class.java)
     var bundle = Bundle()

@@ -16,6 +16,7 @@ import com.example.watchit_movieapp.databinding.ListsFragmentBinding
 import com.example.watchit_movieapp.interfaces.ListClickedCallback
 import com.example.watchit_movieapp.model.Watchlist
 import com.example.watchit_movieapp.utilities.AdapterMode
+import com.example.watchit_movieapp.utilities.Constants
 import com.example.watchit_movieapp.utilities.FireStoreManager
 import com.example.watchit_movieapp.utilities.SignalManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -43,22 +44,11 @@ class ListsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        favListener = FireStoreManager.loadCurrentUser() { user ->
-            favCount = user.favorites.size
-
-            if (::watchlistAdapter.isInitialized && watchlistAdapter.lists.isNotEmpty()) {
-                watchlistAdapter.lists[0].titleCount = favCount
-                watchlistAdapter.notifyItemChanged(0)
-            }
-        }
-
-        listsListener = FireStoreManager.showMyLists { watchlists ->
-            watchlistAdapter.updateData(watchlists, favCount)
-        }
 
         binding.BTNAddList.setOnClickListener {
-
+            addList()
         }
+        setupRecyclerView()
 
     }
 
@@ -67,12 +57,12 @@ class ListsFragment : Fragment() {
             override fun watchlistClicked(watchlist: Watchlist) {
                 val intent = Intent(requireContext(), WatchlistActivity::class.java)
                 var bundle = Bundle()
-                if (watchlist.id == "FAVORITES_ID") {
-                    bundle.putString("LIST_ID", "FAVORITES_SPECIAL_ID")
-                    bundle.putString("LIST_NAME", "My Favorites")
+                if (watchlist.id == Constants.FIRESTORE.FAVORITES) {
+                    bundle.putString(Constants.bundlekeys.LIST_ID_KEY, Constants.FIRESTORE.FAVORITES)
+                    bundle.putString(Constants.bundlekeys.LIST_NAME_KEY, "Favorites")
                 } else {
-                    bundle.putString("LIST_ID", watchlist.id)
-                    bundle.putString("LIST_NAME", watchlist.listName)
+                    bundle.putString(Constants.bundlekeys.LIST_ID_KEY, watchlist.id)
+                    bundle.putString(Constants.bundlekeys.LIST_NAME_KEY, watchlist.listName)
                 }
                 intent.putExtras(bundle)
                 startActivity(intent)
@@ -84,7 +74,7 @@ class ListsFragment : Fragment() {
             }
         }
 
-        val initialList = listOf(Watchlist(id = "FAVORITES_ID", "My Favorites", favCount))
+        val initialList = listOf(Watchlist(id = Constants.FIRESTORE.FAVORITES ,"Favorites", favCount))
 
         watchlistAdapter = WatchlistAdapter(initialList, mode= AdapterMode.NATURAL,callback = callback)
 
@@ -93,7 +83,7 @@ class ListsFragment : Fragment() {
     }
 
     private fun showDeleteConfirmation(watchlist: Watchlist) {
-        android.app.AlertDialog.Builder(requireContext())
+        android.app.AlertDialog.Builder(requireContext(),com.google.android.material.R.style.ThemeOverlay_MaterialComponents_MaterialAlertDialog)
             .setTitle("delete list")
             .setMessage("Are you sure you want to delete '${watchlist.listName}'?")
             .setPositiveButton("delete") { _, _ ->
@@ -150,9 +140,48 @@ class ListsFragment : Fragment() {
         }
     }
 
+    private fun startListsListen()
+    {
+        if (favListener == null) {
+            favListener = FireStoreManager.loadCurrentUser { user ->
+                favCount = user.favorites.size
+
+                if (::watchlistAdapter.isInitialized && watchlistAdapter.lists.isNotEmpty()) {
+                    watchlistAdapter.lists[0].titleCount = favCount
+                    watchlistAdapter.notifyItemChanged(0)
+                }
+            }
+        }
+
+        if(listsListener == null) {
+            listsListener = FireStoreManager.showMyLists { watchlists ->
+                watchlistAdapter.updateData(watchlists, favCount)
+            }
+        }
+    }
+
+    private fun stopListListen() {
+        favListener?.remove()
+        favListener = null
+        listsListener?.remove()
+        listsListener = null
+    }
+
+
 
     override fun onResume() {
         super.onResume()
+        if(!isHidden) startListsListen()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        stopListListen()
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (hidden) stopListListen() else startListsListen()
     }
 
 
@@ -160,6 +189,9 @@ class ListsFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        favListener?.remove()
+        listsListener?.remove()
+        _binding = null
     }
 
 }
