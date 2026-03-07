@@ -57,6 +57,8 @@ class WatchlistAdapter(
                 binding.ItemCountLBL.text = "${this.titleCount} titles"
                 if (this.id == Constants.FIRESTORE.FAVORITES) {
                     binding.ListImage.setImageResource(R.drawable.heart)
+                }else{
+                    binding.ListImage.setImageResource(R.drawable.movie_list)
                 }
                 binding.BTNDeleteList.isVisible = (mode != AdapterMode.FRIEND_MODE && this.id != Constants.FIRESTORE.FAVORITES)
                 binding.root.setOnClickListener {

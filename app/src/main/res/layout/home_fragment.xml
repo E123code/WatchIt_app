@@ -52,9 +52,9 @@
             app:tint="@color/theme_yellow" />
 
         <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/iProfile"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:id="@+id/Profile_IMG"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
             android:layout_marginStart="@dimen/default_margin"
             android:src="@drawable/round_profile_circle"
             app:shapeAppearanceOverlay="@style/CircleImage" />

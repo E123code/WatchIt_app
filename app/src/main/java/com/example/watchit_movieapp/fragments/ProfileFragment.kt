@@ -1,10 +1,14 @@
 package com.example.watchit_movieapp.fragments
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.watchit_movieapp.AuthLoginActivity
@@ -16,17 +20,30 @@ import com.example.watchit_movieapp.interfaces.UserClickedCallback
 import com.example.watchit_movieapp.utilities.Constants
 import com.example.watchit_movieapp.utilities.FireStoreManager
 import com.example.watchit_movieapp.utilities.ImageLoader
+import com.example.watchit_movieapp.utilities.SignalManager
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.ListenerRegistration
 
 class ProfileFragment : Fragment() {
 
     private lateinit var userAdapter: UserAdapter
 
-    private var userListener: ListenerRegistration? = null
 
     private var _binding: ProfileFragmentBinding? = null
     private val binding get() = _binding!!
+
+    private val pickMedia =
+        registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) {
+                Log.d("PhotoPicker", "Selected URI: $uri")
+                uploadImage(uri)
+            } else {
+                Log.d("PhotoPicker", "No media selected")
+                SignalManager.getInstance()
+                    .toast("No image selected", SignalManager.ToastLength.SHORT)
+            }
+
+        }
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -49,10 +66,9 @@ class ProfileFragment : Fragment() {
 
         setupRecycleView()
         binding.UploadBTN.setOnClickListener {
-
-
+            pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
-        binding.searchFriendsBTN.setOnClickListener{
+        binding.searchFriendsBTN.setOnClickListener {
             openUsersSearch()
 
         }
@@ -66,31 +82,35 @@ class ProfileFragment : Fragment() {
 
             activity?.finish()
         }
+
+        loadUser()
     }
 
 
     private fun loadUser() {
-        if (userListener != null) return
+        val user = FireStoreManager.currentUser ?: return
 
-        userListener = FireStoreManager.loadCurrentUser { user ->
-            binding.Name.text = user.username
-            binding.email.text = user.email
-            if (user.profileImageUrl.isNotEmpty()) {
-                ImageLoader.getInstance().loadProfile(user.profileImageUrl, binding.ProfileIMG)
-            }
 
-            FireStoreManager.getFriendsList(user.friendsList){users ->
-                userAdapter.updateData(users)
+        binding.Name.text = user.username
+        binding.email.text = user.email
+        if (user.profileImageUrl.isNotEmpty()) {
+            ImageLoader.getInstance().loadProfile(user.profileImageUrl, binding.ProfileIMG)
+        }
 
-                if(users.isNotEmpty()){
-                    binding.rvFriends.visibility = View.VISIBLE
-                    binding.NoFriendsLBL.visibility = View.GONE
-                }else{
-                    binding.rvFriends.visibility = View.GONE
-                    binding.NoFriendsLBL.visibility = View.VISIBLE
-                }
+
+        FireStoreManager.getFriendsList(user.friendsList) { users ->
+            if (!isAdded) return@getFriendsList
+            userAdapter.updateData(users)
+
+            if (users.isNotEmpty()) {
+                binding.rvFriends.visibility = View.VISIBLE
+                binding.NoFriendsLBL.visibility = View.GONE
+            } else {
+                binding.rvFriends.visibility = View.GONE
+                binding.NoFriendsLBL.visibility = View.VISIBLE
             }
         }
+
 
     }
 
@@ -106,7 +126,7 @@ class ProfileFragment : Fragment() {
             }
         }
 
-        userAdapter = UserAdapter(emptyList(),callback)
+        userAdapter = UserAdapter(emptyList(), callback)
 
         binding.rvFriends.adapter = userAdapter
         binding.rvFriends.layoutManager = LinearLayoutManager(requireContext())
@@ -114,21 +134,30 @@ class ProfileFragment : Fragment() {
     }
 
 
-    private fun openUsersSearch(){
+    private fun openUsersSearch() {
         val intent = Intent(requireContext(), SearchUsersActivity::class.java)
         startActivity(intent)
     }
 
-    private fun stopListen() {
-        userListener?.remove()
-        userListener = null
+    private fun uploadImage(uri: Uri) {
+        FireStoreManager.uploadProfileImage(uri) { profileUri ->
+            if (profileUri != null) {
+                SignalManager.getInstance()
+                    .toast("Profile updated!", SignalManager.ToastLength.SHORT)
+            } else {
+                SignalManager.getInstance()
+                    .toast("Failed to upload", SignalManager.ToastLength.SHORT)
+            }
+
+        }
+
+
     }
+
 
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
-        if (hidden) {
-            stopListen()
-        } else {
+        if (!hidden) {
             loadUser()
         }
     }
@@ -140,14 +169,9 @@ class ProfileFragment : Fragment() {
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-        stopListen()
-    }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        userListener?.remove()
         _binding = null
     }
 

@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.ui.auth)
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.storage)
 
     //glide
     implementation(libs.glide)

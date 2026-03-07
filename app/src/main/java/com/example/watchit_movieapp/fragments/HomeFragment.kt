@@ -17,10 +17,10 @@ import com.example.watchit_movieapp.interfaces.MediaItemClickedCallback
 import com.example.watchit_movieapp.utilities.AdapterMode
 import com.example.watchit_movieapp.utilities.Constants
 import com.example.watchit_movieapp.utilities.FireStoreManager
+import com.example.watchit_movieapp.utilities.ImageLoader
 import com.example.watchit_movieapp.utilities.RetrofitClient
 import com.example.watchit_movieapp.utilities.SignalManager
 import com.example.watchit_movieapp.utilities.openDetails
-import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 
 class HomeFragment: Fragment() {
@@ -33,9 +33,9 @@ class HomeFragment: Fragment() {
     private var cachedMovies: List<MediaItem>? = null
     private var cachedTVShows: List<MediaItem>? = null
 
-    private var userListener: ListenerRegistration? = null
 
-    private var currentFavoriteIds: List<String> = emptyList()
+
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -48,10 +48,10 @@ class HomeFragment: Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        updateProfileImageUI()
+
         setupRecyclerView()
-
-
-
         loadMovies()
 
         binding.BTNSearch.setOnClickListener {
@@ -61,40 +61,42 @@ class HomeFragment: Fragment() {
         setupTabsLogic()
     }
 
-
-    private fun  startUserListen(){
-
-        if (userListener != null) return
-
-        userListener = FireStoreManager.loadCurrentUser { user ->
-            currentFavoriteIds = user.favorites
-
-            cachedMovies?.forEach { it.isFavorite = currentFavoriteIds.contains(it.id) }
-            cachedTVShows?.forEach { it.isFavorite = currentFavoriteIds.contains(it.id) }
-            if (::mediaAdapter.isInitialized) {
-                mediaAdapter.notifyDataSetChanged()
-            }
+    private fun updateProfileImageUI() {
+        val user = FireStoreManager.currentUser
+        if (user != null && user.profileImageUrl.isNotEmpty()) {
+            ImageLoader.getInstance().loadProfile(user.profileImageUrl, binding.ProfileIMG)
         }
-
-    }
-
-    private fun stopUserListen() {
-        userListener?.remove()
-        userListener = null
     }
 
 
 
+
+    override fun onResume() {
+        super.onResume()
+        if (!isHidden) {
+            Log.d(Constants.logMessage.HOME_KEY, "User returned to Home tab")
+            refreshHeartsUI()
+        }
+    }
 
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
         if (!hidden) {
             Log.d(Constants.logMessage.HOME_KEY, "User returned to Home tab")
+            updateProfileImageUI()
+            refreshHeartsUI()
+        }
 
-            startUserListen()
+    }
 
-        }else{
-            stopUserListen()
+    private fun refreshHeartsUI() {
+        cachedMovies?.forEach { it.isFavorite = FireStoreManager.isInFavorites(it.id) }
+        cachedTVShows?.forEach { it.isFavorite = FireStoreManager.isInFavorites(it.id) }
+
+        if (binding.homeTabLayout.selectedTabPosition == 0) {
+            cachedMovies?.let { mediaAdapter.updateData(it) }
+        } else {
+            cachedTVShows?.let { mediaAdapter.updateData(it) }
         }
     }
 
@@ -141,7 +143,7 @@ class HomeFragment: Fragment() {
             }
 
             override fun deleteButtonClicked(
-                item: MediaItem,
+                title: MediaItem,
                 position: Int
             ) {
 
@@ -183,7 +185,7 @@ class HomeFragment: Fragment() {
                 if (response.results.isNotEmpty()) {
                     response.results.forEach {
                         it.mediaType = "movie"
-                        it.isFavorite = currentFavoriteIds.contains(it.id)
+                        it.isFavorite = FireStoreManager.isInFavorites(it.id)
                     }
                     cachedMovies = response.results
                     mediaAdapter.updateData(response.results)
@@ -207,7 +209,7 @@ class HomeFragment: Fragment() {
                 if (response.results.isNotEmpty()) {
                     response.results.forEach {
                         it.mediaType = "tv"
-                        it.isFavorite = currentFavoriteIds.contains(it.id)
+                        it.isFavorite = FireStoreManager.isInFavorites(it.id)
                     }
                     cachedTVShows = response.results
                     mediaAdapter.updateData(response.results)
@@ -219,21 +221,12 @@ class HomeFragment: Fragment() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        if (!isHidden) {
-            startUserListen()
-        }
-    }
 
-    override fun onPause() {
-        super.onPause()
-        stopUserListen()
-    }
+
+
 
     override fun onDestroyView() {
         super.onDestroyView()
-        userListener?.remove()
         _binding = null
     }
 

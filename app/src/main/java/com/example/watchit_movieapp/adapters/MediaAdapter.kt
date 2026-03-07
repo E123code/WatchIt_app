@@ -53,7 +53,6 @@ class MediaAdapter(
                 binding.ageRating.text = this.ageRating
                 binding.mediaType.isVisible = (mode != AdapterMode.HOME)
                 binding.deleteBTN.isVisible = (mode == AdapterMode.MY_LIST)
-                binding.IMGFavorite.isVisible = (mode != AdapterMode.FRIEND_MODE)
                 if (binding.mediaType.isVisible) {
                     binding.mediaType.text = if (this.mediaType == "movie") "Movie" else "TV Series"
                 }
@@ -83,6 +82,16 @@ class MediaAdapter(
 
     override fun getItemCount(): Int = items.size
 
+    fun removeItem(position: Int) {
+        if (position >= 0 && position < items.size) {
+            val mutableList = items.toMutableList()
+            mutableList.removeAt(position)
+            items = mutableList
+
+            notifyItemRemoved(position)
+            notifyItemRangeChanged(position, items.size)
+        }
+    }
 
     inner class MediaViewHolder(val binding: MediaItemBinding) :
         RecyclerView.ViewHolder(binding.root) {

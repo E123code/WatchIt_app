@@ -5,6 +5,95 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/theme_background"
     tools:context=".SearchUsersActivity">
+
+    <ImageView
+        android:id="@+id/BTN_back"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="@dimen/default_margin"
+        android:layout_marginEnd="@dimen/default_margin"
+        android:layout_marginVertical="@dimen/default_margin"
+        android:backgroundTint="@color/black"
+        android:contentDescription="@string/back"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:src="@drawable/arrow_back"
+        app:tint="@color/theme_yellow"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/search_row"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/black"
+        app:layout_constraintTop_toBottomOf="@id/BTN_back"
+        android:layout_marginTop="@dimen/default_margin"
+        >
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/search_bar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            app:iconifiedByDefault="false"
+            android:clickable="true"
+            app:searchIcon="@null"
+            app:searchHintIcon="@null"
+            app:defaultQueryHint="Search users"
+            android:textDirection="ltr"
+            android:background="@drawable/search_bar_background"
+            app:closeIcon="@drawable/clear_btn"
+            app:theme="@style/SearchViewStyle"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/BTN_search_user"/>
+
+
+
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/BTN_search_user"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="@string/search"
+            android:textColor="@color/black"
+            app:backgroundTint="@color/theme_yellow"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/RV_results"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/search_row"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:listitem="@layout/user"
+        android:visibility="visible"/>
+
+    <TextView
+        android:id="@+id/No_Results_LBL"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/search_row"
+        android:text="@string/no_results"
+        android:textColor="@color/grey_icon"
+        android:textSize="@dimen/default_title_size"
+        android:textStyle="bold"
+        android:visibility="gone"/>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

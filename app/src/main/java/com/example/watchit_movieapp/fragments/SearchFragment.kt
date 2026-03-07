@@ -21,7 +21,6 @@ import com.example.watchit_movieapp.utilities.GenresMap
 import com.example.watchit_movieapp.utilities.RetrofitClient
 import com.example.watchit_movieapp.utilities.SignalManager
 import com.example.watchit_movieapp.utilities.openDetails
-import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 
 
@@ -34,8 +33,6 @@ class SearchFragment : Fragment() {
 
     private lateinit var mediaAdapter: MediaAdapter
 
-    private var favoritesListener: ListenerRegistration? = null
-    private var currentFavoriteIds: List<String> = emptyList()
 
 
     override fun onCreateView(
@@ -108,7 +105,7 @@ class SearchFragment : Fragment() {
             }
 
             override fun deleteButtonClicked(
-                item: MediaItem,
+                title: MediaItem,
                 position: Int
             ) {
 
@@ -157,7 +154,7 @@ class SearchFragment : Fragment() {
                 resultsList =
                     response.results.filter { mediaItem -> mediaItem.mediaType == "tv" || mediaItem.mediaType == "movie" }
 
-                resultsList.forEach { it.isFavorite = currentFavoriteIds.contains(it.id) }
+                resultsList.forEach { it.isFavorite = FireStoreManager.isInFavorites(it.id) }
 
                 binding.genresScrollView.visibility = View.VISIBLE
                 binding.chipGroupGenres.clearCheck()
@@ -216,53 +213,33 @@ class SearchFragment : Fragment() {
 
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
-        if (hidden) {
-            stopFavoritesListen()
-        }else{
-            startFavoritesListen()
+        if (!hidden) {
+            refreshSearchHearts()
         }
     }
 
 
-    private fun startFavoritesListen(){
-        if (favoritesListener != null ) return
 
-        favoritesListener = FireStoreManager.loadCurrentUser { user ->
-            currentFavoriteIds = user.favorites
-
-            resultsList.forEach { it.isFavorite = currentFavoriteIds.contains(it.id) }
-
-            if (::mediaAdapter.isInitialized) {
-                mediaAdapter.notifyDataSetChanged()
-            }
-        }
-    }
-
-    private fun stopFavoritesListen() {
-        favoritesListener?.remove()
-        favoritesListener = null
-    }
 
     override fun onResume() {
         super.onResume()
-
         if (!isHidden) {
-            startFavoritesListen()
+            refreshSearchHearts()
         }
     }
 
-
-
-
-
-    override fun onPause() {
-        super.onPause()
-        stopFavoritesListen()
+    private fun refreshSearchHearts() {
+        resultsList.forEach {
+            it.isFavorite = FireStoreManager.isInFavorites(it.id)
+        }
+        mediaAdapter.notifyDataSetChanged()
     }
+
+
+
 
     override fun onDestroyView() {
         super.onDestroyView()
-        favoritesListener?.remove()
         _binding = null
     }
 

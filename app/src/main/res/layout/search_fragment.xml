@@ -124,7 +124,7 @@
         android:textColor="@color/white"
         android:textStyle="bold"
         android:textSize="@dimen/default_title_size"
-        android:text="No results found"
+        android:text="@string/no_results"
         android:visibility="gone"
         />
 

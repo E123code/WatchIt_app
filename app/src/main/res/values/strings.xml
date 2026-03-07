@@ -12,13 +12,8 @@
     <string name="actorName" translatable="false">Actor Name</string>
     <string name="character" translatable="false">Character</string>
     <string name="placeholder_search_content" translatable="false">what you want to watch?</string>
-
-    <!--for firebaseUI-->
-
-    <string name="fui_name_hint">Username</string>
-    <string name="fui_missing_first_and_last_name">Enter name</string>
     <string name="my_lists" translatable="false">My Lists</string>
-    <string name="add_list_button" translatable="false">add list button</string>
+    <string name="add_list_button" translatable="false">add list </string>
     <string name="user_name" translatable="false">User name</string>
     <string name="email" translatable="false">email</string>
     <string name="uploadBTN" translatable="false">upload</string>
@@ -26,4 +21,13 @@
     <string name="logout" translatable="false">Logout</string>
     <string name="friends" translatable="false">Friends</string>
     <string name="search_users" translatable="false">Search users</string>
+    <string name="no_titles_yet" translatable="false">No titles yet</string>
+    <string name="add_to_list" translatable="false">Add to List</string>
+    <string name="no_results" translatable="false">No results</string>
+    <string name="back" translatable="false">Back</string>
+    <!--for firebaseUI-->
+
+    <string name="fui_name_hint">Username</string>
+    <string name="fui_missing_first_and_last_name">Enter name</string>
+    s
 </resources>

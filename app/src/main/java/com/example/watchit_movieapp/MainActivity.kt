@@ -44,6 +44,10 @@ class MainActivity : AppCompatActivity() {
         val currentUser = FirebaseAuth.getInstance().currentUser
         currentUser?.let {
             FireStoreManager.checkUserSaved(it)
+
+            FireStoreManager.loadCurrentUser{
+                Log.d(Constants.TAGS.MAIN, "User data updated")
+            }
         }
 
         if (savedInstanceState == null) {
@@ -135,17 +139,9 @@ class MainActivity : AppCompatActivity() {
 
         val transaction = supportFragmentManager.beginTransaction()
 
-        if (!targetFragment.isAdded) {
-            transaction.add(R.id.fragment_container, targetFragment)
-        }
 
 
         transaction.hide(activeFragment).show(targetFragment)
-
-
-        if (targetFragment !is HomeFragment) {
-            transaction.addToBackStack(null)
-        }
 
         transaction.commit()
         activeFragment = targetFragment

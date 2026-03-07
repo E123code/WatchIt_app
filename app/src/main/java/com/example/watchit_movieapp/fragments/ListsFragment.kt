@@ -20,6 +20,7 @@ import com.example.watchit_movieapp.utilities.Constants
 import com.example.watchit_movieapp.utilities.FireStoreManager
 import com.example.watchit_movieapp.utilities.SignalManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ListenerRegistration
 
 class ListsFragment : Fragment() {
@@ -29,9 +30,7 @@ class ListsFragment : Fragment() {
     private lateinit var watchlistAdapter: WatchlistAdapter
 
     private var listsListener: ListenerRegistration? = null
-    private var favListener: ListenerRegistration? = null
 
-    private var favCount: Int = 0
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -57,6 +56,7 @@ class ListsFragment : Fragment() {
             override fun watchlistClicked(watchlist: Watchlist) {
                 val intent = Intent(requireContext(), WatchlistActivity::class.java)
                 var bundle = Bundle()
+                bundle.putString(Constants.bundlekeys.ID_KEY, FirebaseAuth.getInstance().currentUser?.uid)
                 if (watchlist.id == Constants.FIRESTORE.FAVORITES) {
                     bundle.putString(Constants.bundlekeys.LIST_ID_KEY, Constants.FIRESTORE.FAVORITES)
                     bundle.putString(Constants.bundlekeys.LIST_NAME_KEY, "Favorites")
@@ -73,8 +73,8 @@ class ListsFragment : Fragment() {
 
             }
         }
-
-        val initialList = listOf(Watchlist(id = Constants.FIRESTORE.FAVORITES ,"Favorites", favCount))
+        val currentFavCount = FireStoreManager.currentUser?.favorites?.size ?: 0
+        val initialList = listOf(Watchlist(id = Constants.FIRESTORE.FAVORITES ,"Favorites", currentFavCount))
 
         watchlistAdapter = WatchlistAdapter(initialList, mode= AdapterMode.NATURAL,callback = callback)
 
@@ -142,27 +142,18 @@ class ListsFragment : Fragment() {
 
     private fun startListsListen()
     {
-        if (favListener == null) {
-            favListener = FireStoreManager.loadCurrentUser { user ->
-                favCount = user.favorites.size
 
-                if (::watchlistAdapter.isInitialized && watchlistAdapter.lists.isNotEmpty()) {
-                    watchlistAdapter.lists[0].titleCount = favCount
-                    watchlistAdapter.notifyItemChanged(0)
-                }
-            }
-        }
+        val currentFavCount = FireStoreManager.currentUser?.favorites?.size ?: 0
 
         if(listsListener == null) {
             listsListener = FireStoreManager.showMyLists { watchlists ->
-                watchlistAdapter.updateData(watchlists, favCount)
+                watchlistAdapter.updateData(watchlists, currentFavCount)
             }
         }
     }
 
     private fun stopListListen() {
-        favListener?.remove()
-        favListener = null
+
         listsListener?.remove()
         listsListener = null
     }
@@ -171,7 +162,10 @@ class ListsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        if(!isHidden) startListsListen()
+        if(!isHidden){
+            startListsListen()
+            refreshFavCount()
+        }
     }
 
     override fun onPause() {
@@ -181,15 +175,24 @@ class ListsFragment : Fragment() {
 
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
-        if (hidden) stopListListen() else startListsListen()
+        if (hidden) stopListListen()
+        else {
+            startListsListen()
+            refreshFavCount()
+        }
     }
 
 
-
+    private fun refreshFavCount() {
+        val currentFavCount = FireStoreManager.currentUser?.favorites?.size ?: 0
+        if (::watchlistAdapter.isInitialized && watchlistAdapter.lists.isNotEmpty()) {
+            watchlistAdapter.lists[0].titleCount = currentFavCount
+            watchlistAdapter.notifyItemChanged(0)
+        }
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        favListener?.remove()
         listsListener?.remove()
         _binding = null
     }
