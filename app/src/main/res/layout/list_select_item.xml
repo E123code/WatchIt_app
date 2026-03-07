@@ -34,7 +34,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="15 items"
-            android:textColor="@color/grey_icon"
+            android:textColor="@color/text_color"
             android:textSize="16sp" />
     </LinearLayout>
 

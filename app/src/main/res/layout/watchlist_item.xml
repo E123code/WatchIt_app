@@ -56,7 +56,7 @@
                     android:layout_height="wrap_content"
                     android:text="12 titles"
                     android:textColor="@color/cv_text"
-                    android:textSize="@dimen/card_text_size"
+                    android:textSize="@dimen/title_color"
                     android:visibility="visible"/>
 
 
