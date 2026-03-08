@@ -10,6 +10,7 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.watchit_movieapp.R
 import com.example.watchit_movieapp.WatchlistActivity
 import com.example.watchit_movieapp.adapters.WatchlistAdapter
 import com.example.watchit_movieapp.databinding.ListsFragmentBinding
@@ -83,7 +84,7 @@ class ListsFragment : Fragment() {
     }
 
     private fun showDeleteConfirmation(watchlist: Watchlist) {
-        android.app.AlertDialog.Builder(requireContext(),com.google.android.material.R.style.ThemeOverlay_MaterialComponents_MaterialAlertDialog)
+        MaterialAlertDialogBuilder(requireContext(),R.style.CustomAlertDialog)
             .setTitle("delete list")
             .setMessage("Are you sure you want to delete '${watchlist.listName}'?")
             .setPositiveButton("delete") { _, _ ->
@@ -114,7 +115,7 @@ class ListsFragment : Fragment() {
         input.layoutParams = params
         container.addView(input)
 
-        val dialog = MaterialAlertDialogBuilder(requireContext(), com.google.android.material.R.style.ThemeOverlay_MaterialComponents_MaterialAlertDialog)
+        val dialog = MaterialAlertDialogBuilder(requireContext(), R.style.CustomAlertDialog)
             .setMessage("Enter watchlist name")
             .setView(container)
             .setPositiveButton("Create") { _, _ ->

@@ -5,6 +5,147 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/theme_background"
     tools:context=".FriendProfileActivity">
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/Profile_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/friend_Profile_IMG"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="30dp"
+            android:src="@drawable/round_profile_circle"
+            app:shapeAppearanceOverlay="@style/CircleImage" />
+
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/friend_details"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/default_margin"
+            android:layout_marginTop="40dp"
+
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/friend_Name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/default_margin"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:text="@string/user_name"
+                android:textColor="@color/white"
+                android:textSize="@dimen/detail_text_size"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/friend_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:text="@string/email"
+                android:textColor="@color/cv_text"
+                android:textSize="@dimen/detail_text_size"
+                android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/BTN_friend_action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/default_margin"
+                android:text="@string/add_friend"
+                android:textColor="@color/friend_btn_text_color"
+                android:textStyle="bold"
+                android:backgroundTint="@color/friend_btn_background"
+                app:icon="@drawable/friend_btn_icon"
+                />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/friend_info_TabLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/cv_background"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/Profile_layout"
+        app:tabGravity="fill"
+        app:tabIndicatorColor="@color/theme_yellow"
+        app:tabIndicatorHeight="1dp"
+        app:tabMode="fixed"
+        app:tabSelectedTextColor="@color/theme_yellow"
+        app:tabTextColor="@color/text_color">
+
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/friends" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/watchlists" />
+
+    </com.google.android.material.tabs.TabLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/RV_watchlists"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/friend_info_TabLayout"
+        tools:listitem="@layout/watchlist_item" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/RV_friends"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:visibility="visible"
+        app:layout_constraintTop_toBottomOf="@id/friend_info_TabLayout"
+        tools:listitem="@layout/user" />
+
+    <TextView
+        android:id="@+id/No_Friends_LBL"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/no_friends_yet"
+        android:textColor="@color/grey_icon"
+        android:textSize="@dimen/default_title_size"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/friend_info_TabLayout" />
+
+    <ImageView
+        android:id="@+id/BTN_back"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="@dimen/default_margin"
+        android:layout_marginEnd="@dimen/default_margin"
+        android:layout_marginVertical="@dimen/default_margin"
+        android:backgroundTint="@color/black"
+        android:contentDescription="@string/back"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:src="@drawable/arrow_back"
+        app:tint="@color/theme_yellow"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

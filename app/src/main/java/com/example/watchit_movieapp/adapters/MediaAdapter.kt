@@ -21,6 +21,8 @@ class MediaAdapter(
     private val callback: MediaItemClickedCallback
 ) : RecyclerView.Adapter<MediaAdapter.MediaViewHolder>() {
 
+    val currentItems: List<MediaItem>
+        get() = items
 
     var titleCallback: TitleCallback? = null
 
@@ -91,6 +93,14 @@ class MediaAdapter(
             notifyItemRemoved(position)
             notifyItemRangeChanged(position, items.size)
         }
+    }
+
+    fun syncFavorites(favoriteIds: List<String>) {
+        this.items.forEach { item ->
+            item.isFavorite = favoriteIds.contains(item.id)
+        }
+
+        notifyDataSetChanged()
     }
 
     inner class MediaViewHolder(val binding: MediaItemBinding) :

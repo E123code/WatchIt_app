@@ -17,6 +17,7 @@ import com.example.watchit_movieapp.fragments.SearchFragment
 import com.example.watchit_movieapp.utilities.Constants
 import com.example.watchit_movieapp.utilities.FireStoreManager
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ListenerRegistration
 
 
 class MainActivity : AppCompatActivity() {
@@ -29,6 +30,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var profileFragment: ProfileFragment
 
     private lateinit var activeFragment: Fragment
+
+    private var currentUserListener: ListenerRegistration? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,10 +47,6 @@ class MainActivity : AppCompatActivity() {
         val currentUser = FirebaseAuth.getInstance().currentUser
         currentUser?.let {
             FireStoreManager.checkUserSaved(it)
-
-            FireStoreManager.loadCurrentUser{
-                Log.d(Constants.TAGS.MAIN, "User data updated")
-            }
         }
 
         if (savedInstanceState == null) {
@@ -107,7 +106,6 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-
         supportFragmentManager.addOnBackStackChangedListener {
             val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
             when (currentFragment) {
@@ -130,6 +128,18 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    override fun onStart() {
+        super.onStart()
+        currentUserListener =      FireStoreManager.loadCurrentUser{user ->
+            if (user !=null) {
+                Log.d(Constants.TAGS.MAIN, "User data updated: ${user.username}")
+                if (activeFragment is ProfileFragment) {
+                    (activeFragment as ProfileFragment).loadUser()
+                }
+            }
+        }
+    }
+
     fun navigateToSearch() {
         binding.bottomNavigation.selectedItemId = R.id.search
     }
@@ -147,6 +157,11 @@ class MainActivity : AppCompatActivity() {
         activeFragment = targetFragment
     }
 
+    override fun onStop() {
+        super.onStop()
+        currentUserListener?.remove()
+        currentUserListener = null
+    }
 
 
 }

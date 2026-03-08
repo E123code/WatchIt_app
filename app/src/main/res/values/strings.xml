@@ -25,9 +25,13 @@
     <string name="add_to_list" translatable="false">Add to List</string>
     <string name="no_results" translatable="false">No results</string>
     <string name="back" translatable="false">Back</string>
+    <string name="add_friend" translatable="false">Add Friend</string>
+    <string name="remove_friend" translatable="false">Remove Friend</string>
+    <string name="no_other_lists_found" translatable="false">No other lists found</string>
+
     <!--for firebaseUI-->
 
     <string name="fui_name_hint">Username</string>
     <string name="fui_missing_first_and_last_name">Enter name</string>
-    s
+
 </resources>

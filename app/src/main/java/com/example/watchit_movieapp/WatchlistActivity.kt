@@ -146,6 +146,12 @@ class WatchlistActivity : AppCompatActivity() {
             }
         }else{
             FireStoreManager.loadWatchlist(listOwner,listID){titles ->
+
+                val myFavoritesIds = FireStoreManager.currentUser?.favorites ?: emptyList()
+
+                titles.forEach { title ->
+                    title.isFavorite = myFavoritesIds.contains(title.id)
+                }
                 showList(titles)
             }
         }
@@ -163,5 +169,22 @@ class WatchlistActivity : AppCompatActivity() {
         }
     }
 
+
+    override fun onRestart() {
+        super.onRestart()
+
+        val favoriteIds = FireStoreManager.currentUser?.favorites ?: emptyList()
+
+        mediaAdapter.currentItems.forEach { title ->
+            title.isFavorite = favoriteIds.contains(title.id)
+        }
+
+        if (listID == Constants.FIRESTORE.FAVORITES) {
+            val updatedList = mediaAdapter.currentItems.filter { favoriteIds.contains(it.id) }
+            mediaAdapter.updateData(updatedList)
+        } else {
+            mediaAdapter.notifyDataSetChanged()
+        }
+    }
 
 }

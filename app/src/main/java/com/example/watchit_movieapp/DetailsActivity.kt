@@ -214,43 +214,50 @@ class DetailsActivity : AppCompatActivity() {
 
 
         FireStoreManager.showMyLists { watchLists ->
-            val callback = object : AddCallback {
-                override fun watchlistClicked(watchlist: Watchlist) {
-                    sheetBinding.rvLists.isEnabled = false
-                    FireStoreManager.addTitle(details.toMediaItem(), watchlist.id) { result ->
-                        sheetBinding.rvLists.isEnabled = true // החזרת האפשרות ללחוץ
+            if (watchLists.isEmpty()) {
+                sheetBinding.rvLists.visibility = View.GONE
+                sheetBinding.LBLNoLists.visibility = View.VISIBLE
+            } else {
+                sheetBinding.rvLists.visibility = View.VISIBLE
+                sheetBinding.LBLNoLists.visibility = View.GONE
+                val callback = object : AddCallback {
+                    override fun watchlistClicked(watchlist: Watchlist) {
+                        sheetBinding.rvLists.isEnabled = false
+                        FireStoreManager.addTitle(details.toMediaItem(), watchlist.id) { result ->
+                            sheetBinding.rvLists.isEnabled = true // החזרת האפשרות ללחוץ
 
-                        when(result) {
-                            Constants.logMessage.SUCCESS -> {
-                                SignalManager.getInstance().toast(
-                                    "Added to ${watchlist.listName}",
-                                    SignalManager.ToastLength.SHORT
-                                )
-                                dialog.dismiss()
-                            }
+                            when (result) {
+                                Constants.logMessage.SUCCESS -> {
+                                    SignalManager.getInstance().toast(
+                                        "Added to ${watchlist.listName}",
+                                        SignalManager.ToastLength.SHORT
+                                    )
+                                    dialog.dismiss()
+                                }
 
-                            Constants.logMessage.EXISTS -> {
-                                SignalManager.getInstance().toast(
-                                    "Already in  ${watchlist.listName}",
-                                    SignalManager.ToastLength.LONG
-                                )
-                            }
+                                Constants.logMessage.EXISTS -> {
+                                    SignalManager.getInstance().toast(
+                                        "Already in  ${watchlist.listName}",
+                                        SignalManager.ToastLength.LONG
+                                    )
+                                }
 
-                            else -> {
-                                SignalManager.getInstance().toast(
-                                    "Error, please try again",
-                                    SignalManager.ToastLength.SHORT
-                                )
+                                else -> {
+                                    SignalManager.getInstance().toast(
+                                        "Error, please try again",
+                                        SignalManager.ToastLength.SHORT
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
-            val adapter = ListSelectAdapter(watchLists, callback)
+                val adapter = ListSelectAdapter(watchLists, callback)
 
-            sheetBinding.rvLists.adapter = adapter
-            sheetBinding.rvLists.layoutManager = LinearLayoutManager(this)
+                sheetBinding.rvLists.adapter = adapter
+                sheetBinding.rvLists.layoutManager = LinearLayoutManager(this)
+            }
+            dialog.show()
         }
-        dialog.show()
     }
 }

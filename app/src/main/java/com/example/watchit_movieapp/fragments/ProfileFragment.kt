@@ -87,7 +87,10 @@ class ProfileFragment : Fragment() {
     }
 
 
-    private fun loadUser() {
+     fun loadUser() {
+
+         if (_binding == null) return
+
         val user = FireStoreManager.currentUser ?: return
 
 

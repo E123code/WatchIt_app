@@ -74,7 +74,7 @@ class HomeFragment: Fragment() {
     override fun onResume() {
         super.onResume()
         if (!isHidden) {
-            Log.d(Constants.logMessage.HOME_KEY, "User returned to Home tab")
+            Log.d(Constants.TAGS.HOME_TAG, "User returned to Home tab")
             refreshHeartsUI()
         }
     }
@@ -82,7 +82,7 @@ class HomeFragment: Fragment() {
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
         if (!hidden) {
-            Log.d(Constants.logMessage.HOME_KEY, "User returned to Home tab")
+            Log.d(Constants.TAGS.HOME_TAG, "User returned to Home tab")
             updateProfileImageUI()
             refreshHeartsUI()
         }

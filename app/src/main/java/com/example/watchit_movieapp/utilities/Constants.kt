@@ -1,6 +1,5 @@
 package com.example.watchit_movieapp.utilities
 
-import com.example.watchit_movieapp.MainActivity
 
 object Constants {
 
@@ -16,11 +15,11 @@ object Constants {
 
     object logMessage{
 
-        const val HOME_KEY = "HOME"
         const val DETAILS_KEY = "DETAILS"
         const val FIRESTORE_KEY = "FIRESTORE"
 
         const val STORAGE_KEY = "STORAGE"
+
 
         const val EXISTS  = "ALREADY EXISTS"
         const val SUCCESS ="SUCCESS"

@@ -16,6 +16,7 @@ import com.example.watchit_movieapp.interfaces.TitleCallback
 import com.example.watchit_movieapp.interfaces.MediaItemClickedCallback
 import com.example.watchit_movieapp.model.MediaItem
 import com.example.watchit_movieapp.utilities.AdapterMode
+import com.example.watchit_movieapp.utilities.Constants
 import com.example.watchit_movieapp.utilities.FireStoreManager
 import com.example.watchit_movieapp.utilities.GenresMap
 import com.example.watchit_movieapp.utilities.RetrofitClient
@@ -117,7 +118,6 @@ class SearchFragment : Fragment() {
     }
 
     private fun setupSearchAndFilters() {
-        // 1. חיפוש טקסט
         binding.searchBar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 if (!query.isNullOrEmpty()) {
@@ -170,7 +170,7 @@ class SearchFragment : Fragment() {
 
 
             } catch (e: Exception) {
-                Log.e("search", "Error: ${e.message}")
+                Log.e(Constants.TAGS.SEARCH_TAG, "Error: ${e.message}")
                 SignalManager.getInstance()
                     .toast("Failed to load data", SignalManager.ToastLength.SHORT)
             }
