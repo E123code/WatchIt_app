@@ -17,6 +17,7 @@ import com.example.watchit_movieapp.SearchUsersActivity
 import com.example.watchit_movieapp.adapters.UserAdapter
 import com.example.watchit_movieapp.databinding.ProfileFragmentBinding
 import com.example.watchit_movieapp.interfaces.UserClickedCallback
+import com.example.watchit_movieapp.model.User
 import com.example.watchit_movieapp.utilities.Constants
 import com.example.watchit_movieapp.utilities.FireStoreManager
 import com.example.watchit_movieapp.utilities.ImageLoader
@@ -44,6 +45,9 @@ class ProfileFragment : Fragment() {
 
         }
 
+    private val userObserver: (User?) -> Unit = { user ->
+        loadUser(user)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -58,7 +62,7 @@ class ProfileFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         initViews()
-
+        FireStoreManager.getInstance().addObserver(userObserver)
     }
 
 
@@ -74,24 +78,16 @@ class ProfileFragment : Fragment() {
         }
 
         binding.logoutBTN.setOnClickListener {
-            FirebaseAuth.getInstance().signOut()
-
-            val intent = Intent(requireContext(), AuthLoginActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
-
-            activity?.finish()
+            logoutLogic()
         }
 
-        loadUser()
+
     }
 
 
-     fun loadUser() {
+     fun loadUser(user: User?) {
 
-         if (_binding == null) return
-
-        val user = FireStoreManager.currentUser ?: return
+         if (_binding == null || user == null) return
 
 
         binding.Name.text = user.username
@@ -101,7 +97,7 @@ class ProfileFragment : Fragment() {
         }
 
 
-        FireStoreManager.getFriendsList(user.friendsList) { users ->
+        FireStoreManager.getInstance().getFriendsList(user.friendsList) { users ->
             if (!isAdded) return@getFriendsList
             userAdapter.updateData(users)
 
@@ -143,7 +139,7 @@ class ProfileFragment : Fragment() {
     }
 
     private fun uploadImage(uri: Uri) {
-        FireStoreManager.uploadProfileImage(uri) { profileUri ->
+        FireStoreManager.getInstance().uploadProfileImage(uri) { profileUri ->
             if (profileUri != null) {
                 SignalManager.getInstance()
                     .toast("Profile updated!", SignalManager.ToastLength.SHORT)
@@ -157,8 +153,20 @@ class ProfileFragment : Fragment() {
 
     }
 
+    private fun logoutLogic(){
+        FirebaseAuth.getInstance().signOut()
+        FireStoreManager.getInstance().clearData()
 
-    override fun onHiddenChanged(hidden: Boolean) {
+        val intent = Intent(requireContext(), AuthLoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+
+        activity?.finish()
+    }
+
+
+
+/*    override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
         if (!hidden) {
             loadUser()
@@ -170,11 +178,12 @@ class ProfileFragment : Fragment() {
         if (!isHidden) {
             loadUser()
         }
-    }
+    }*/
 
 
     override fun onDestroyView() {
         super.onDestroyView()
+        FireStoreManager.getInstance().removeObserver(userObserver)
         _binding = null
     }
 

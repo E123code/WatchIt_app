@@ -3,18 +3,20 @@ package com.example.watchit_movieapp.adapters
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.example.watchit_movieapp.R
 import com.example.watchit_movieapp.databinding.ListSelectItemBinding
 import com.example.watchit_movieapp.interfaces.AddCallback
 import com.example.watchit_movieapp.model.Watchlist
 
 class ListSelectAdapter(
     private val lists: List<Watchlist>,
+    private val currentTitleId: String,
     private val callback: AddCallback
 ) : RecyclerView.Adapter<ListSelectAdapter.ListViewHolder>() {
 
     private var lastClickTime: Long = 0
 
-    // ה-ViewHolder שמחזיק את ה-Binding של השורה הבודדת
+
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ListViewHolder {
@@ -31,11 +33,23 @@ class ListSelectAdapter(
                 binding.LBLListName.text = this.listName
                 binding.LBLItemCount.text = "${this.titleCount} titles"
 
-                holder.itemView.setOnClickListener {
+                val isAlreadyInList = this.items.contains(currentTitleId)
+
+                if (isAlreadyInList) {
+                    binding.IMGStatus.setImageResource(R.drawable.checked_icon)
+                    holder.itemView.alpha = 0.5f
+                } else {
+                   binding.IMGStatus.setImageResource(R.drawable.add_btn)
+                    holder.itemView.alpha = 1.0f
+                }
+
+                itemView.setOnClickListener {
                     val currentTime = System.currentTimeMillis()
                     if (currentTime - lastClickTime > 500) {
                         lastClickTime = currentTime
-                        callback.watchlistClicked(this)
+                        if(!isAlreadyInList) {
+                            callback.watchlistClicked(this)
+                        }
                     }
                 }
             }

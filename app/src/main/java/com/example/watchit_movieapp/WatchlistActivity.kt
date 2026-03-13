@@ -1,6 +1,7 @@
 package com.example.watchit_movieapp
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -12,6 +13,7 @@ import com.example.watchit_movieapp.databinding.ActivityWatchlistBinding
 import com.example.watchit_movieapp.interfaces.MediaItemClickedCallback
 import com.example.watchit_movieapp.interfaces.TitleCallback
 import com.example.watchit_movieapp.model.MediaItem
+import com.example.watchit_movieapp.model.User
 import com.example.watchit_movieapp.utilities.AdapterMode
 import com.example.watchit_movieapp.utilities.Constants
 import com.example.watchit_movieapp.utilities.FireStoreManager
@@ -24,11 +26,14 @@ class WatchlistActivity : AppCompatActivity() {
     private lateinit var binding: ActivityWatchlistBinding
     private lateinit var mediaAdapter: MediaAdapter
 
-    private var isFavorites = false
 
     private var listOwner: String = ""
     private var listID: String = ""
     private var listName: String = ""
+
+     private val userObserver :(User?)-> Unit={ _->
+        refreshUI()
+     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,6 +49,7 @@ class WatchlistActivity : AppCompatActivity() {
         }
 
         initViews()
+        FireStoreManager.getInstance().addObserver(userObserver)
     }
 
     private fun initViews() {
@@ -79,38 +85,89 @@ class WatchlistActivity : AppCompatActivity() {
 
         mediaAdapter.titleCallback = object : TitleCallback {
             override fun favoriteButtonClicked(title: MediaItem, position: Int) {
+                val viewHolder =
+                    binding.RVListTitles.findViewHolderForAdapterPosition(position) as? MediaAdapter.MediaViewHolder
+                viewHolder?.binding?.IMGFavorite?.isEnabled = false
+
                 val previous = title.isFavorite
                 title.toggleFavorite()
-                SignalManager.getInstance().vibrate()
                 mediaAdapter.notifyItemChanged(position)
+                SignalManager.getInstance().vibrate()
 
                 if (title.isFavorite) {
-                    FireStoreManager.addFavorite(title) { success ->
-                        if (!success) {
-                            abortChange(title, previous, position)
-                        } else {
-                            SignalManager.getInstance()
-                                .toast("added to favorites", SignalManager.ToastLength.SHORT)
-                        }
-
-                    }
-                } else {
-                    FireStoreManager.deleteFavorite(title.id) { success ->
-                        if (success) {
-                            if (listID == Constants.FIRESTORE.FAVORITES) {
-                                removeLocally(position)
+                    FireStoreManager.getInstance()
+                        .addTitle(title, Constants.FIRESTORE.FAVORITES) { result ->
+                            viewHolder?.binding?.IMGFavorite?.isEnabled = true
+                            if (result != Constants.logMessage.SUCCESS) {
+                                title.isFavorite = previous
+                                mediaAdapter.notifyItemChanged(position)
+                                SignalManager.getInstance()
+                                    .toast("error", SignalManager.ToastLength.SHORT)
+                            } else {
+                                SignalManager.getInstance()
+                                    .toast("added to favorites", SignalManager.ToastLength.SHORT)
                             }
-                            SignalManager.getInstance()
-                                .toast("deleted from favorites", SignalManager.ToastLength.SHORT)
-                        } else {
-                            abortChange(title, previous, position)
                         }
-                    }
+                } else {
+                    FireStoreManager.getInstance()
+                        .removeTitle(title.id, Constants.FIRESTORE.FAVORITES) { success ->
+                            if (!success) {
+                                title.isFavorite = previous
+                                viewHolder?.binding?.IMGFavorite?.isEnabled = true
+                                SignalManager.getInstance()
+                                    .toast("error", SignalManager.ToastLength.SHORT)
+                            } else {
+                                if (listID == Constants.FIRESTORE.FAVORITES) {
+                                    removeLocally(position)
+                                } else {
+                                    viewHolder?.binding?.IMGFavorite?.isEnabled = true
+                                    mediaAdapter.notifyItemChanged(position)
+                                }
+                                SignalManager.getInstance()
+                                    .toast(
+                                        "deleted from favorites",
+                                        SignalManager.ToastLength.SHORT
+                                    )
+                            }
+                        }
                 }
             }
 
+            /* override fun favoriteButtonClicked(title: MediaItem, position: Int) {
+                 SignalManager.getInstance().vibrate()
+                 val isCurrentlyFav = FireStoreManager.getInstance().isInFavorites(title.id)
+                 if (!isCurrentlyFav) {
+                     FireStoreManager.getInstance().addTitle(title, Constants.FIRESTORE.FAVORITES) { result ->
+                         if (result == Constants.logMessage.SUCCESS) {
+                             mediaAdapter.notifyItemChanged(position)
+                             SignalManager.getInstance()
+                                 .toast("added to favorites", SignalManager.ToastLength.SHORT)
+                         } else {
+                             SignalManager.getInstance()
+                                 .toast("Connection error", SignalManager.ToastLength.SHORT)
+                         }
+                     }
+                 } else {
+                     FireStoreManager.getInstance().removeTitle(title.id,Constants.FIRESTORE.FAVORITES) { success ->
+                         if (success) {
+                             if (listID == Constants.FIRESTORE.FAVORITES) {
+                                 removeLocally(position)
+                             }else{
+                                 mediaAdapter.notifyItemChanged(position)
+                             }
+                             SignalManager.getInstance()
+                                 .toast("deleted from favorites", SignalManager.ToastLength.SHORT)
+
+                         }else{
+                             SignalManager.getInstance()
+                                 .toast("Connection error", SignalManager.ToastLength.SHORT)
+                         }
+                     }
+                 }
+             }
+ */
             override fun deleteButtonClicked(title: MediaItem, position: Int) {
-                FireStoreManager.removeTitle(title.id, listID) { success ->
+                FireStoreManager.getInstance().removeTitle(title.id, listID) { success ->
                     if (success) {
                         removeLocally(position)
                         SignalManager.getInstance()
@@ -125,11 +182,11 @@ class WatchlistActivity : AppCompatActivity() {
 
     }
 
-    private fun abortChange(item: MediaItem, previousState: Boolean, position: Int) {
-        item.isFavorite = previousState
-        mediaAdapter.notifyItemChanged(position)
-        SignalManager.getInstance().toast("Connection error", SignalManager.ToastLength.SHORT)
-    }
+    /*   private fun abortChange(item: MediaItem, previousState: Boolean, position: Int) {
+           item.isFavorite = previousState
+           mediaAdapter.notifyItemChanged(position)
+           SignalManager.getInstance().toast("Connection error", SignalManager.ToastLength.SHORT)
+       }*/
 
     private fun removeLocally(position: Int) {
         mediaAdapter.removeItem(position)
@@ -139,52 +196,77 @@ class WatchlistActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadTitles(){
-        if(listID== Constants.FIRESTORE.FAVORITES){
-            FireStoreManager.showFavorites(listOwner){titles ->
-                showList(titles)
-            }
-        }else{
-            FireStoreManager.loadWatchlist(listOwner,listID){titles ->
+    private fun loadTitles() {
+        /* if (listID == Constants.FIRESTORE.FAVORITES) {
+             FireStoreManager.getInstance().showMyLists {  }(listOwner) { titles ->
+                 showList(titles)
+             }
+         } else {
+             FireStoreManager.getInstance().loadWatchlist(listOwner, listID) { titles ->
 
-                val myFavoritesIds = FireStoreManager.currentUser?.favorites ?: emptyList()
+                 val myFavoritesIds =
+                     FireStoreManager.getInstance().currentUser?.favorites ?: emptyList()
 
-                titles.forEach { title ->
-                    title.isFavorite = myFavoritesIds.contains(title.id)
-                }
-                showList(titles)
-            }
+                 titles.forEach { title ->
+                     title.isFavorite = myFavoritesIds.contains(title.id)
+                 }
+                 showList(titles)
+             }
+         }*/
+
+        FireStoreManager.getInstance().loadWatchlist(listOwner, listID) { titles ->
+            showList(titles)
         }
-
     }
 
-    private fun showList(titles: List<MediaItem>){
-        if(titles.isEmpty()){
+    private fun showList(titles: List<MediaItem>) {
+        if (titles.isEmpty()) {
             binding.RVListTitles.visibility = View.GONE
             binding.emptyListLBL.visibility = View.VISIBLE
-        }else{
+        } else {
             binding.RVListTitles.visibility = View.VISIBLE
             binding.emptyListLBL.visibility = View.GONE
             mediaAdapter.updateData(titles)
         }
     }
 
+    private fun refreshUI() {
+        if (::mediaAdapter.isInitialized) {
 
-    override fun onRestart() {
-        super.onRestart()
+            if (listID == Constants.FIRESTORE.FAVORITES) {
+                val updatedList =
+                    mediaAdapter.currentItems.filter { item ->
+                        FireStoreManager.getInstance().isInFavorites(item.id)
+                    }
 
-        val favoriteIds = FireStoreManager.currentUser?.favorites ?: emptyList()
-
-        mediaAdapter.currentItems.forEach { title ->
-            title.isFavorite = favoriteIds.contains(title.id)
+                Log.d(
+                    "CHECK",
+                    "Items count before: ${mediaAdapter.itemCount}, after filter: ${updatedList.size}"
+                )
+                if (updatedList.size != mediaAdapter.itemCount) {
+                    mediaAdapter.updateData(updatedList)
+                    binding.emptyListLBL.visibility =
+                        if (updatedList.isEmpty()) View.VISIBLE else View.GONE
+                }
+            } else {
+                mediaAdapter.syncFavorites()
+            }
         }
+    }
 
-        if (listID == Constants.FIRESTORE.FAVORITES) {
-            val updatedList = mediaAdapter.currentItems.filter { favoriteIds.contains(it.id) }
-            mediaAdapter.updateData(updatedList)
-        } else {
-            mediaAdapter.notifyDataSetChanged()
-        }
+    override fun onResume() {
+        super.onResume()
+        refreshUI()
+    }
+
+//    override fun onRestart() {
+//        super.onRestart()
+//
+//    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        FireStoreManager.getInstance().removeObserver(userObserver)
     }
 
 }

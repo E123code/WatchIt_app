@@ -10,7 +10,7 @@ import retrofit2.http.Query
 
 
 interface TMDBService {
-    @GET("trending/movie/day")
+    @GET("movie/popular")
     suspend fun getPopularMovies(
         @Query("api_key") apiKey: String,
         @Query("language") language: String = "en-US",
@@ -18,7 +18,7 @@ interface TMDBService {
     ): TMDBResponse
 
 
-    @GET("trending/tv/day")
+    @GET("tv/popular")
     suspend fun getPopularTVShows(
         @Query("api_key") apiKey: String,
         @Query("language") language: String = "en-US",

@@ -32,7 +32,16 @@ class ListsFragment : Fragment() {
 
     private var listsListener: ListenerRegistration? = null
 
-
+    /*  private val userObserver: (com.example.watchit_movieapp.model.User?) -> Unit = { user ->
+          user?.let {
+              val newFavCount = it.favorites.size
+              if (::watchlistAdapter.isInitialized && watchlistAdapter.lists.isNotEmpty()) {
+                  watchlistAdapter.lists[0].titleCount = newFavCount
+                  watchlistAdapter.notifyItemChanged(0)
+              }
+          }
+      }
+  */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -44,11 +53,20 @@ class ListsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setupRecyclerView()
+
+        /* listsListener = FireStoreManager.getInstance().showMyLists { watchlists ->
+             val currentFavCount = FireStoreManager.getInstance().currentUser?.favorites?.size ?: 0
+             watchlistAdapter.updateData(watchlists, currentFavCount)
+         }
+ */
+//        FireStoreManager.getInstance().addObserver(userObserver)
+
 
         binding.BTNAddList.setOnClickListener {
             addList()
         }
-        setupRecyclerView()
+
 
     }
 
@@ -57,9 +75,15 @@ class ListsFragment : Fragment() {
             override fun watchlistClicked(watchlist: Watchlist) {
                 val intent = Intent(requireContext(), WatchlistActivity::class.java)
                 var bundle = Bundle()
-                bundle.putString(Constants.bundlekeys.ID_KEY, FirebaseAuth.getInstance().currentUser?.uid)
+                bundle.putString(
+                    Constants.bundlekeys.ID_KEY,
+                    FirebaseAuth.getInstance().currentUser?.uid
+                )
                 if (watchlist.id == Constants.FIRESTORE.FAVORITES) {
-                    bundle.putString(Constants.bundlekeys.LIST_ID_KEY, Constants.FIRESTORE.FAVORITES)
+                    bundle.putString(
+                        Constants.bundlekeys.LIST_ID_KEY,
+                        Constants.FIRESTORE.FAVORITES
+                    )
                     bundle.putString(Constants.bundlekeys.LIST_NAME_KEY, "Favorites")
                 } else {
                     bundle.putString(Constants.bundlekeys.LIST_ID_KEY, watchlist.id)
@@ -74,23 +98,23 @@ class ListsFragment : Fragment() {
 
             }
         }
-        val currentFavCount = FireStoreManager.currentUser?.favorites?.size ?: 0
-        val initialList = listOf(Watchlist(id = Constants.FIRESTORE.FAVORITES ,"Favorites", currentFavCount))
 
-        watchlistAdapter = WatchlistAdapter(initialList, mode= AdapterMode.NATURAL,callback = callback)
+        watchlistAdapter =
+            WatchlistAdapter(emptyList(), mode = AdapterMode.NATURAL, callback = callback)
 
         binding.RVLists.adapter = watchlistAdapter
         binding.RVLists.layoutManager = LinearLayoutManager(requireContext())
     }
 
     private fun showDeleteConfirmation(watchlist: Watchlist) {
-        MaterialAlertDialogBuilder(requireContext(),R.style.CustomAlertDialog)
+        MaterialAlertDialogBuilder(requireContext(), R.style.CustomAlertDialog)
             .setTitle("delete list")
             .setMessage("Are you sure you want to delete '${watchlist.listName}'?")
             .setPositiveButton("delete") { _, _ ->
-                FireStoreManager.deleteWatchlist(watchlist.id) { success ->
+                FireStoreManager.getInstance().deleteWatchlist(watchlist.id) { success ->
                     if (success) {
-                        SignalManager.getInstance().toast("The list Deleted", SignalManager.ToastLength.SHORT)
+                        SignalManager.getInstance()
+                            .toast("The list Deleted", SignalManager.ToastLength.SHORT)
                     } else {
                         SignalManager.getInstance().toast("Error", SignalManager.ToastLength.SHORT)
                     }
@@ -100,7 +124,7 @@ class ListsFragment : Fragment() {
             .show()
     }
 
-    private fun addList(){
+    private fun addList() {
         val input = EditText(requireContext())
         input.hint = "Enter list name"
         input.setTextColor(Color.WHITE)
@@ -131,24 +155,23 @@ class ListsFragment : Fragment() {
 
     }
 
-    private fun createNewList(listName: String){
-        FireStoreManager.addWatchList(listName){ success ->
+    private fun createNewList(listName: String) {
+        FireStoreManager.getInstance().addWatchList(listName) { success ->
             if (success) {
-                SignalManager.getInstance().toast("Watchlist created!", SignalManager.ToastLength.SHORT)
+                SignalManager.getInstance()
+                    .toast("Watchlist created!", SignalManager.ToastLength.SHORT)
             } else {
-                SignalManager.getInstance().toast("Error creating list", SignalManager.ToastLength.SHORT)
+                SignalManager.getInstance()
+                    .toast("Error creating list", SignalManager.ToastLength.SHORT)
             }
         }
     }
 
-    private fun startListsListen()
-    {
+    private fun startListsListen() {
+        if (listsListener == null) {
+            listsListener = FireStoreManager.getInstance().showMyLists { watchlists ->
 
-        val currentFavCount = FireStoreManager.currentUser?.favorites?.size ?: 0
-
-        if(listsListener == null) {
-            listsListener = FireStoreManager.showMyLists { watchlists ->
-                watchlistAdapter.updateData(watchlists, currentFavCount)
+                watchlistAdapter.updateData(watchlists)
             }
         }
     }
@@ -165,7 +188,7 @@ class ListsFragment : Fragment() {
         super.onResume()
         if(!isHidden){
             startListsListen()
-            refreshFavCount()
+
         }
     }
 
@@ -179,22 +202,24 @@ class ListsFragment : Fragment() {
         if (hidden) stopListListen()
         else {
             startListsListen()
-            refreshFavCount()
         }
     }
 
 
-    private fun refreshFavCount() {
-        val currentFavCount = FireStoreManager.currentUser?.favorites?.size ?: 0
-        if (::watchlistAdapter.isInitialized && watchlistAdapter.lists.isNotEmpty()) {
-            watchlistAdapter.lists[0].titleCount = currentFavCount
-            watchlistAdapter.notifyItemChanged(0)
-        }
-    }
+
+   /*     private fun refreshFavCount() {
+            val currentFavCount = FireStoreManager.getInstance().currentUser?.favorites?.size ?: 0
+            if (::watchlistAdapter.isInitialized && watchlistAdapter.lists.isNotEmpty()) {
+                watchlistAdapter.lists[0].titleCount = currentFavCount
+                watchlistAdapter.notifyItemChanged(0)
+            }
+        }*/
+
 
     override fun onDestroyView() {
         super.onDestroyView()
         listsListener?.remove()
+//        FireStoreManager.getInstance().removeObserver(userObserver)
         _binding = null
     }
 

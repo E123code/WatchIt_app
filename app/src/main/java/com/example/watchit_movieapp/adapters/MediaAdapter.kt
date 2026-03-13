@@ -11,6 +11,7 @@ import com.example.watchit_movieapp.interfaces.MediaItemClickedCallback
 import com.example.watchit_movieapp.interfaces.TitleCallback
 import com.example.watchit_movieapp.model.MediaItem
 import com.example.watchit_movieapp.utilities.AdapterMode
+import com.example.watchit_movieapp.utilities.FireStoreManager
 import com.example.watchit_movieapp.utilities.GenresMap
 import com.example.watchit_movieapp.utilities.ImageLoader
 
@@ -27,6 +28,9 @@ class MediaAdapter(
     var titleCallback: TitleCallback? = null
 
     fun updateData(newMedia: List<MediaItem>) {
+        newMedia.forEach { item ->
+            item.isFavorite = FireStoreManager.getInstance().isInFavorites(item.id)
+        }
         this.items = newMedia
         notifyDataSetChanged()
     }
@@ -69,6 +73,7 @@ class MediaAdapter(
                 binding.root.setOnClickListener {
                     callback.mediaItemClicked(this)
                 }
+
                 if (isFavorite) binding.IMGFavorite.setImageResource(R.drawable.heart)
                 else binding.IMGFavorite.setImageResource(R.drawable.empty_heart)
 
@@ -95,14 +100,13 @@ class MediaAdapter(
         }
     }
 
-    fun syncFavorites(favoriteIds: List<String>) {
+    fun syncFavorites() {
         this.items.forEach { item ->
-            item.isFavorite = favoriteIds.contains(item.id)
+            item.isFavorite = FireStoreManager.getInstance().isInFavorites(item.id)
         }
 
         notifyDataSetChanged()
     }
-
     inner class MediaViewHolder(val binding: MediaItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
         init {

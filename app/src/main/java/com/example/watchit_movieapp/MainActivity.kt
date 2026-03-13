@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
 
         val currentUser = FirebaseAuth.getInstance().currentUser
         currentUser?.let {
-            FireStoreManager.checkUserSaved(it)
+            FireStoreManager.getInstance().checkUserSaved(it)
         }
 
         if (savedInstanceState == null) {
@@ -59,19 +59,26 @@ class MainActivity : AppCompatActivity() {
             activeFragment = homeFragment
 
             supportFragmentManager.beginTransaction()
-                .add(R.id.fragment_container, profileFragment, Constants.TAGS.PROFILE_TAG).hide(profileFragment)
-                .add(R.id.fragment_container, listsFragment, Constants.TAGS.LISTS_TAG).hide(listsFragment)
-                .add(R.id.fragment_container, searchFragment, Constants.TAGS.SEARCH_TAG).hide(searchFragment)
+                .add(R.id.fragment_container, profileFragment, Constants.TAGS.PROFILE_TAG)
+                .hide(profileFragment)
+                .add(R.id.fragment_container, listsFragment, Constants.TAGS.LISTS_TAG)
+                .hide(listsFragment)
+                .add(R.id.fragment_container, searchFragment, Constants.TAGS.SEARCH_TAG)
+                .hide(searchFragment)
                 .add(R.id.fragment_container, homeFragment, Constants.TAGS.HOME_TAG)
                 .commit()
 
             binding.bottomNavigation.selectedItemId = R.id.home
-        }else{
+        } else {
 
-            homeFragment = supportFragmentManager.findFragmentByTag(Constants.TAGS.HOME_TAG) as HomeFragment
-            searchFragment = supportFragmentManager.findFragmentByTag(Constants.TAGS.SEARCH_TAG) as SearchFragment
-            listsFragment = supportFragmentManager.findFragmentByTag(Constants.TAGS.LISTS_TAG) as ListsFragment
-            profileFragment = supportFragmentManager.findFragmentByTag(Constants.TAGS.PROFILE_TAG) as ProfileFragment
+            homeFragment =
+                supportFragmentManager.findFragmentByTag(Constants.TAGS.HOME_TAG) as HomeFragment
+            searchFragment =
+                supportFragmentManager.findFragmentByTag(Constants.TAGS.SEARCH_TAG) as SearchFragment
+            listsFragment =
+                supportFragmentManager.findFragmentByTag(Constants.TAGS.LISTS_TAG) as ListsFragment
+            profileFragment =
+                supportFragmentManager.findFragmentByTag(Constants.TAGS.PROFILE_TAG) as ProfileFragment
 
             activeFragment = supportFragmentManager.fragments.find { !it.isHidden } ?: homeFragment
         }
@@ -81,26 +88,29 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private  fun initViews(){
+    private fun initViews() {
 
 
         binding.bottomNavigation.setOnItemSelectedListener {
             when (it.itemId) {
                 R.id.home -> {
                     switchFragment(homeFragment)
-                    Log.i("HOME","home selected")
+                    Log.i("HOME", "home selected")
                 }
+
                 R.id.search -> {
                     switchFragment(searchFragment)
-                    Log.i("SEARCH","search selected")
+                    Log.i("SEARCH", "search selected")
                 }
+
                 R.id.watchlists -> {
                     switchFragment(listsFragment)
-                    Log.i("LISTS","lists selected")
+                    Log.i("LISTS", "lists selected")
                 }
+
                 R.id.profile -> {
                     switchFragment(profileFragment)
-                    Log.i("PROFILE","profile selected")
+                    Log.i("PROFILE", "profile selected")
                 }
             }
             true
@@ -112,12 +122,15 @@ class MainActivity : AppCompatActivity() {
                 is HomeFragment -> {
                     binding.bottomNavigation.menu.findItem(R.id.home).isChecked = true
                 }
+
                 is SearchFragment -> {
                     binding.bottomNavigation.menu.findItem(R.id.search).isChecked = true
                 }
+
                 is ListsFragment -> {
                     binding.bottomNavigation.menu.findItem(R.id.watchlists).isChecked = true
                 }
+
                 is ProfileFragment -> {
                     binding.bottomNavigation.menu.findItem(R.id.profile).isChecked = true
                 }
@@ -125,20 +138,18 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-
     }
 
     override fun onStart() {
         super.onStart()
-        currentUserListener =      FireStoreManager.loadCurrentUser{user ->
-            if (user !=null) {
+        currentUserListener = FireStoreManager.getInstance().loadCurrentUser { user ->
+            if (user != null) {
                 Log.d(Constants.TAGS.MAIN, "User data updated: ${user.username}")
-                if (activeFragment is ProfileFragment) {
-                    (activeFragment as ProfileFragment).loadUser()
-                }
+
             }
         }
     }
+
 
     fun navigateToSearch() {
         binding.bottomNavigation.selectedItemId = R.id.search

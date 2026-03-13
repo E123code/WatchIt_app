@@ -9,11 +9,11 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.watchit_movieapp.MainActivity
-import com.example.watchit_movieapp.model.MediaItem
 import com.example.watchit_movieapp.adapters.MediaAdapter
 import com.example.watchit_movieapp.databinding.HomeFragmentBinding
-import com.example.watchit_movieapp.interfaces.TitleCallback
 import com.example.watchit_movieapp.interfaces.MediaItemClickedCallback
+import com.example.watchit_movieapp.interfaces.TitleCallback
+import com.example.watchit_movieapp.model.MediaItem
 import com.example.watchit_movieapp.utilities.AdapterMode
 import com.example.watchit_movieapp.utilities.Constants
 import com.example.watchit_movieapp.utilities.FireStoreManager
@@ -23,7 +23,7 @@ import com.example.watchit_movieapp.utilities.SignalManager
 import com.example.watchit_movieapp.utilities.openDetails
 import kotlinx.coroutines.launch
 
-class HomeFragment: Fragment() {
+class HomeFragment : Fragment() {
 
     private var _binding: HomeFragmentBinding? = null
     private val binding get() = _binding!!
@@ -32,9 +32,14 @@ class HomeFragment: Fragment() {
 
     private var cachedMovies: List<MediaItem>? = null
     private var cachedTVShows: List<MediaItem>? = null
+    private var lastLoadedUrl = ""
 
 
-
+    private val userObserver: (com.example.watchit_movieapp.model.User?) -> Unit = { _ ->
+        if (isAdded && !isHidden) {
+            refreshUI()
+        }
+    }
 
 
     override fun onCreateView(
@@ -49,56 +54,32 @@ class HomeFragment: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        updateProfileImageUI()
-
         setupRecyclerView()
         loadMovies()
+
+        updateProfileImageUI()
 
         binding.BTNSearch.setOnClickListener {
             (activity as? MainActivity)?.navigateToSearch()
         }
 
         setupTabsLogic()
+        FireStoreManager.getInstance().addObserver(userObserver)
     }
 
     private fun updateProfileImageUI() {
-        val user = FireStoreManager.currentUser
-        if (user != null && user.profileImageUrl.isNotEmpty()) {
+        val user = FireStoreManager.getInstance().currentUser
+        if (user != null && user.profileImageUrl.isNotEmpty() && user.profileImageUrl != lastLoadedUrl) {
             ImageLoader.getInstance().loadProfile(user.profileImageUrl, binding.ProfileIMG)
+            lastLoadedUrl = user.profileImageUrl
         }
     }
 
+    /*   private fun applyCurrentFavorites(items: List<MediaItem>) {
+           val favorites = FireStoreManager.getInstance().currentUser?.favorites ?: emptyList()
+           items.forEach { it.isFavorite = favorites.contains(it.id) }
+       }*/
 
-
-
-    override fun onResume() {
-        super.onResume()
-        if (!isHidden) {
-            Log.d(Constants.TAGS.HOME_TAG, "User returned to Home tab")
-            refreshHeartsUI()
-        }
-    }
-
-    override fun onHiddenChanged(hidden: Boolean) {
-        super.onHiddenChanged(hidden)
-        if (!hidden) {
-            Log.d(Constants.TAGS.HOME_TAG, "User returned to Home tab")
-            updateProfileImageUI()
-            refreshHeartsUI()
-        }
-
-    }
-
-    private fun refreshHeartsUI() {
-        cachedMovies?.forEach { it.isFavorite = FireStoreManager.isInFavorites(it.id) }
-        cachedTVShows?.forEach { it.isFavorite = FireStoreManager.isInFavorites(it.id) }
-
-        if (binding.homeTabLayout.selectedTabPosition == 0) {
-            cachedMovies?.let { mediaAdapter.updateData(it) }
-        } else {
-            cachedTVShows?.let { mediaAdapter.updateData(it) }
-        }
-    }
 
     private fun setupRecyclerView() {
         val callback = object : MediaItemClickedCallback {
@@ -107,40 +88,50 @@ class HomeFragment: Fragment() {
                 openDetails(mediaItem)
             }
         }
-        mediaAdapter = MediaAdapter(emptyList(), AdapterMode.HOME,callback)
+        mediaAdapter = MediaAdapter(emptyList(), AdapterMode.HOME, callback)
 
         mediaAdapter.titleCallback = object : TitleCallback {
             override fun favoriteButtonClicked(title: MediaItem, position: Int) {
+                val viewHolder =
+                    binding.rvMedia.findViewHolderForAdapterPosition(position) as? MediaAdapter.MediaViewHolder
+                viewHolder?.binding?.IMGFavorite?.isEnabled = false
+
                 val previous = title.isFavorite
                 title.toggleFavorite()
-                SignalManager.getInstance().vibrate()
                 mediaAdapter.notifyItemChanged(position)
+                SignalManager.getInstance().vibrate()
 
                 if (title.isFavorite) {
-                    FireStoreManager.addFavorite(title) { success ->
-                        if (!success) {
-                            title.isFavorite = previous
-                            mediaAdapter.notifyItemChanged(position)
-                            SignalManager.getInstance()
-                                .toast("Connection error", SignalManager.ToastLength.SHORT)
-                        } else {
-                            SignalManager.getInstance()
-                                .toast("added to favorites", SignalManager.ToastLength.SHORT)
+                    FireStoreManager.getInstance()
+                        .addTitle(title, Constants.FIRESTORE.FAVORITES) { result ->
+                            viewHolder?.binding?.IMGFavorite?.isEnabled = true // שחרור הנעילה
+                            if (result != Constants.logMessage.SUCCESS) {
+                                title.isFavorite = previous
+                                mediaAdapter.notifyItemChanged(position)
+                                SignalManager.getInstance()
+                                    .toast(" error", SignalManager.ToastLength.SHORT)
+                            } else {
+                                SignalManager.getInstance()
+                                    .toast("added to favorites", SignalManager.ToastLength.SHORT)
+                            }
                         }
-
-                    }
                 } else {
-                    FireStoreManager.deleteFavorite(title.id) { success ->
-                        if (!success) {
-                            title.isFavorite = previous
-                            mediaAdapter.notifyItemChanged(position)
-                        } else {
-                            SignalManager.getInstance()
-                                .toast("deleted from favorites", SignalManager.ToastLength.SHORT)
+                    FireStoreManager.getInstance()
+                        .removeTitle(title.id, Constants.FIRESTORE.FAVORITES) { success ->
+                            viewHolder?.binding?.IMGFavorite?.isEnabled = true // שחרור הנעילה
+                            if (!success) {
+                                title.isFavorite = previous
+                                mediaAdapter.notifyItemChanged(position)
+                                SignalManager.getInstance()
+                                    .toast(
+                                        "deleted from favorites",
+                                        SignalManager.ToastLength.SHORT
+                                    )
+                            }
                         }
-                    }
                 }
             }
+
 
             override fun deleteButtonClicked(
                 title: MediaItem,
@@ -157,9 +148,9 @@ class HomeFragment: Fragment() {
     }
 
 
-
     private fun setupTabsLogic() {
-        binding.homeTabLayout.addOnTabSelectedListener(object : com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
+        binding.homeTabLayout.addOnTabSelectedListener(object :
+            com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab?) {
                 when (tab?.position) {
                     0 -> loadMovies()
@@ -177,7 +168,6 @@ class HomeFragment: Fragment() {
             mediaAdapter.updateData(cachedMovies!!)
             return
         }
-        // שימוש ב-lifecycleScope כדי להריץ את ה-Retrofit ברקע
         lifecycleScope.launch {
             try {
                 val response = RetrofitClient.getPopularMovies()
@@ -185,14 +175,15 @@ class HomeFragment: Fragment() {
                 if (response.results.isNotEmpty()) {
                     response.results.forEach {
                         it.mediaType = "movie"
-                        it.isFavorite = FireStoreManager.isInFavorites(it.id)
                     }
+//                    applyCurrentFavorites(response.results)
                     cachedMovies = response.results
                     mediaAdapter.updateData(response.results)
                 }
             } catch (e: Exception) {
-                Log.e("home fragment", "Error fetching movies: ${e.message}")
-                SignalManager.getInstance().toast("Failed to load data", SignalManager.ToastLength.SHORT)
+                Log.e(Constants.TAGS.HOME_TAG, "Error fetching movies: ${e.message}")
+                SignalManager.getInstance()
+                    .toast("Failed to load data", SignalManager.ToastLength.SHORT)
             }
         }
     }
@@ -209,24 +200,48 @@ class HomeFragment: Fragment() {
                 if (response.results.isNotEmpty()) {
                     response.results.forEach {
                         it.mediaType = "tv"
-                        it.isFavorite = FireStoreManager.isInFavorites(it.id)
                     }
+//                    applyCurrentFavorites(response.results)
                     cachedTVShows = response.results
                     mediaAdapter.updateData(response.results)
                 }
             } catch (e: Exception) {
-                Log.e("home fragment", "Error fetching tv shows: ${e.message}")
-                SignalManager.getInstance().toast("Failed to load data", SignalManager.ToastLength.SHORT)
+                Log.e(Constants.TAGS.HOME_TAG, "Error fetching tv shows: ${e.message}")
+                SignalManager.getInstance()
+                    .toast("Failed to load data", SignalManager.ToastLength.SHORT)
             }
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (!isHidden) {
+            Log.d(Constants.TAGS.HOME_TAG, "User returned to Home tab")
+            refreshUI()
+        }
+    }
 
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden) {
+            Log.d(Constants.TAGS.HOME_TAG, "User returned to Home tab")
+            refreshUI()
+        }
 
+    }
+
+    private fun refreshUI() {
+        if (::mediaAdapter.isInitialized) {
+            mediaAdapter.syncFavorites()
+            mediaAdapter.notifyDataSetChanged()
+            updateProfileImageUI()
+        }
+    }
 
 
     override fun onDestroyView() {
         super.onDestroyView()
+        FireStoreManager.getInstance().removeObserver(userObserver)
         _binding = null
     }
 

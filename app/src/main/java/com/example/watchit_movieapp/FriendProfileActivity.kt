@@ -9,10 +9,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.watchit_movieapp.adapters.UserAdapter
 import com.example.watchit_movieapp.adapters.WatchlistAdapter
 import com.example.watchit_movieapp.databinding.ActivityFriendProfieBinding
+import com.example.watchit_movieapp.databinding.ProfileFragmentBinding
 import com.example.watchit_movieapp.interfaces.ListClickedCallback
 import com.example.watchit_movieapp.interfaces.UserClickedCallback
 import com.example.watchit_movieapp.model.User
@@ -119,12 +121,12 @@ class FriendProfileActivity : AppCompatActivity() {
             val id = friendId
             if (id != null) {
                 if (isFriend) {
-                    FireStoreManager.removeFriend(id) {
+                    FireStoreManager.getInstance().removeFriend(id) {
                         SignalManager.getInstance()
                             .toast("Friend removed", SignalManager.ToastLength.SHORT)
                     }
                 } else {
-                    FireStoreManager.addFriend(id) {
+                    FireStoreManager.getInstance().addFriend(id) {
                         SignalManager.getInstance()
                             .toast("Friend added", SignalManager.ToastLength.SHORT)
                     }
@@ -166,7 +168,7 @@ class FriendProfileActivity : AppCompatActivity() {
         binding.RVWatchlists.visibility = View.GONE
 
         currentFriendUser?.let { user ->
-            FireStoreManager.getFriendsList(user.friendsList) { friends ->
+            FireStoreManager.getInstance().getFriendsList(user.friendsList) { friends ->
                 if (friends.isEmpty()) {
                     binding.NoFriendsLBL.visibility = View.VISIBLE
                     binding.RVFriends.visibility = View.GONE
@@ -191,11 +193,11 @@ class FriendProfileActivity : AppCompatActivity() {
 
         val id = friendId ?: return
 
-        val favCount = currentFriendUser?.favorites?.size ?: 0
 
-        FireStoreManager.getFriendWatchlists(id) { watchlists ->
+
+        FireStoreManager.getInstance().getFriendWatchlists(id) { watchlists ->
             Log.d(Constants.TAGS.LISTS_TAG, "Updating Watchlists")
-            watchlistAdapter.updateData(watchlists, favCount)
+            watchlistAdapter.updateData(watchlists)
 
         }
 
@@ -205,11 +207,11 @@ class FriendProfileActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         friendId?.let { id ->
-            friendshipListener = FireStoreManager.observeFriendship(id) { status ->
+            friendshipListener = FireStoreManager.getInstance().observeFriendship(id) { status ->
                 isFriend = status
                 updateButtonUI(status)
 
-                FireStoreManager.getFriendProfile(id) { user ->
+                FireStoreManager.getInstance().getFriendProfile(id) { user ->
                     this.currentFriendUser = user
                     user?.let {
                         binding.friendName.text = it.username

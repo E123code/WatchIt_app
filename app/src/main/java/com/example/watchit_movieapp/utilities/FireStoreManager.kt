@@ -1,5 +1,6 @@
 package com.example.watchit_movieapp.utilities
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.example.watchit_movieapp.model.MediaItem
@@ -13,7 +14,28 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.storage.FirebaseStorage
 import java.util.UUID
 
-object FireStoreManager {
+class FireStoreManager private constructor(context: Context) {
+
+
+    companion object {
+        @Volatile
+        private var instance: FireStoreManager? = null
+        fun init(context: android.content.Context): FireStoreManager {
+            return instance ?: synchronized(this) {
+                instance
+                    ?: FireStoreManager(context).also { instance = it }
+            }
+        }
+
+        fun getInstance(): FireStoreManager {
+            return instance ?: throw IllegalStateException(
+                "FireStoreManager must be initialized by calling init(context) before use."
+            )
+
+        }
+    }
+
+
     val db: FirebaseFirestore
         get() = FirebaseFirestore.getInstance()
 
@@ -21,11 +43,26 @@ object FireStoreManager {
         get() = FirebaseStorage.getInstance()
 
     private val uid: String
-        get() = FirebaseAuth.getInstance().currentUser?.uid?:""
+        get() = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
 
     var currentUser: User? = null
         private set
+
+    private val userObservers = mutableListOf<(User?) -> Unit>()
+
+    fun addObserver(observer: (User?) -> Unit) {
+        userObservers.add(observer)
+        observer(currentUser)
+    }
+
+    fun removeObserver(observer: (User?) -> Unit) {
+        userObservers.remove(observer)
+    }
+
+    private fun notifyObservers() {
+        userObservers.forEach { it(currentUser) }
+    }
 
     fun checkUserSaved(currentUser: FirebaseUser) {
         val userRef = db.collection(Constants.FIRESTORE.USERS_REF).document(currentUser.uid)
@@ -43,8 +80,22 @@ object FireStoreManager {
         val newUser = User(currentUser.uid, currentUser.displayName ?: "", currentUser.email ?: "")
         val userRef = db.collection(Constants.FIRESTORE.USERS_REF).document(currentUser.uid)
 
-        userRef.set(newUser).addOnSuccessListener {
-            Log.d(Constants.logMessage.FIRESTORE_KEY, "User profile created")
+        val favoritesRoot = Watchlist(
+            id = Constants.FIRESTORE.FAVORITES,
+            listName = "Favorites",
+            titleCount = 0,
+            items = emptyList()
+        )
+
+        val batch = db.batch()
+        batch.set(userRef, newUser)
+
+        val favListRef = userRef.collection(Constants.FIRESTORE.WATCHLISTS_REF)
+            .document(Constants.FIRESTORE.FAVORITES)
+        batch.set(favListRef, favoritesRoot)
+
+        batch.commit().addOnSuccessListener {
+            Log.d(Constants.logMessage.FIRESTORE_KEY, "User profile and Favorites list created")
         }.addOnFailureListener {
             Log.d(Constants.logMessage.FIRESTORE_KEY, "error saving user")
         }
@@ -62,6 +113,8 @@ object FireStoreManager {
                     if (user != null) {
                         this.currentUser = user
                         onUpdate(user)
+
+                        notifyObservers()
                     }
                 }
 
@@ -73,109 +126,186 @@ object FireStoreManager {
     }
 
     fun addTitle(title: MediaItem, listId: String, onComplete: (String) -> Unit) {
-        val listRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
-            .collection(Constants.FIRESTORE.WATCHLISTS_REF).document(listId)
+        val userRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
+        val listRef = userRef.collection(Constants.FIRESTORE.WATCHLISTS_REF)
+            .document(listId)
 
-        listRef.collection(Constants.FIRESTORE.TITLES_REF)
-            .document(title.id).get().addOnSuccessListener { documentSnapshot ->
-                if (documentSnapshot.exists()) {
-                    onComplete(Constants.logMessage.EXISTS)
-                    Log.d(Constants.logMessage.FIRESTORE_KEY, Constants.logMessage.EXISTS)
-                } else {
-                    listRef.collection(Constants.FIRESTORE.TITLES_REF)
-                        .document(title.id).set(title).addOnSuccessListener {
-                            Log.d(Constants.logMessage.FIRESTORE_KEY,"added to list")
-                            listRef.update("titleCount", FieldValue.increment(1))
-                            onComplete(Constants.logMessage.SUCCESS)
-                        }.addOnFailureListener {
-                            Log.d(Constants.logMessage.FIRESTORE_KEY, "adding failed", it)
-                            onComplete(Constants.logMessage.FAIL)
-                        }
+        val titlesRef = userRef.collection(Constants.FIRESTORE.TITLES_REF)
+            .document(title.id)
+
+        listRef.get().addOnSuccessListener { document ->
+            val items = document.get("items") as? List<String> ?: emptyList()
+
+            if (items.contains(title.id)) {
+                onComplete(Constants.logMessage.EXISTS)
+                return@addOnSuccessListener
+            }
+
+            val batch = db.batch()
+
+            batch.set(titlesRef, title)
+            batch.update(listRef, "items", FieldValue.arrayUnion(title.id))
+            batch.update(listRef, "titleCount", FieldValue.increment(1))
+
+            if (listId == Constants.FIRESTORE.FAVORITES) {
+                batch.update(userRef, "favorites", FieldValue.arrayUnion(title.id))
+                currentUser?.favorites?.add(title.id)
+                notifyObservers()
+            }
+            batch.commit().addOnSuccessListener {
+                Log.d(Constants.logMessage.FIRESTORE_KEY, "Successfully added to list")
+                if (listId == Constants.FIRESTORE.FAVORITES)
+
+                onComplete(Constants.logMessage.SUCCESS)
+            }.addOnFailureListener { e ->
+                Log.e(Constants.logMessage.FIRESTORE_KEY, "Batch failed", e)
+                if (listId == Constants.FIRESTORE.FAVORITES) {
+                    currentUser?.favorites?.remove(title.id)
+                    notifyObservers()
                 }
-            }.addOnFailureListener {
-                Log.d(Constants.logMessage.FIRESTORE_KEY, "adding failed", it)
                 onComplete(Constants.logMessage.FAIL)
             }
+        }.addOnFailureListener {
+            Log.d(Constants.logMessage.FIRESTORE_KEY, "adding failed", it)
+            onComplete(Constants.logMessage.FAIL)
+        }
 
     }
 
-    fun loadWatchlist(userid: String, listId: String, onComplete: (List<MediaItem>) -> Unit) {
+    fun removeTitle(titleId: String, listId: String, onResult: (Boolean) -> Unit) {
+        val userRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
+        val listRef = db.document(
+            "${Constants.FIRESTORE.USERS_REF}/${uid}" +
+                    "/${Constants.FIRESTORE.WATCHLISTS_REF}/${listId}"
+        )
+        listRef.get().addOnSuccessListener { document ->
+            if (document.exists()) {
+                val items = document.get("items") as? List<String> ?: emptyList()
 
-        db.collection(Constants.FIRESTORE.USERS_REF).document(userid)
-            .collection(Constants.FIRESTORE.WATCHLISTS_REF).document(listId)
+                if (!items.contains(titleId)) {
+                    Log.d(Constants.logMessage.FIRESTORE_KEY, "Title not in list, skipping remove")
+                    onResult(true) //
+                    return@addOnSuccessListener
+                }
+                val batch = db.batch()
+
+                batch.update(listRef, "items", FieldValue.arrayRemove(titleId))
+                val currentCount = document.getLong("titleCount") ?: 0
+                if (currentCount > 0) {
+                    batch.update(listRef, "titleCount", FieldValue.increment(-1))
+                } else {
+                    batch.update(listRef, "titleCount", 0)
+                }
+
+                if (listId == Constants.FIRESTORE.FAVORITES) {
+                    batch.update(userRef, "favorites", FieldValue.arrayRemove(titleId))
+                    currentUser?.favorites?.remove(titleId)
+                    notifyObservers()
+                }
+                batch.commit()
+                    .addOnSuccessListener {
+                        Log.d(Constants.logMessage.FIRESTORE_KEY, "Title removed from list ")
+                        onResult(true)
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(Constants.logMessage.FIRESTORE_KEY, "Error removing title", e)
+                        if (listId == Constants.FIRESTORE.FAVORITES) {
+                            currentUser?.favorites?.add(titleId)
+                            notifyObservers()
+                        }
+                        onResult(false)
+                    }
+            }
+        }.addOnFailureListener {
+            onResult(false)
+        }
+    }
+
+
+    fun loadWatchlist(
+        userid: String,
+        listId: String,
+        onComplete: (List<MediaItem>) -> Unit
+    ) {
+
+        val titleRef = db.collection(Constants.FIRESTORE.USERS_REF).document(userid)
             .collection(Constants.FIRESTORE.TITLES_REF)
-            .get()
-            .addOnSuccessListener { docs ->
-                val movieList = docs.toObjects(MediaItem::class.java)
-                onComplete(movieList)
+        val listRef = db.collection(Constants.FIRESTORE.USERS_REF).document(userid)
+            .collection(Constants.FIRESTORE.WATCHLISTS_REF).document(listId)
+
+        listRef.get()
+            .addOnSuccessListener { doc ->
+                val ids = doc.get("items") as? List<String> ?: emptyList()
+                if (ids.isEmpty()) {
+                    onComplete(emptyList())
+                    return@addOnSuccessListener
+                }
+                titleRef
+                    .whereIn("id", ids)
+                    .get()
+                    .addOnSuccessListener { querySnapshot ->
+                        val movieList = querySnapshot.toObjects(MediaItem::class.java)
+
+                        movieList.forEach { movie ->
+                            movie.isFavorite = isInFavorites(movie.id)
+                        }
+
+                        onComplete(movieList)
+                    }
+                    .addOnFailureListener {
+                        onComplete(emptyList())
+                    }
             }
             .addOnFailureListener {
                 Log.e(Constants.logMessage.FIRESTORE_KEY, "Error loading list: $listId")
                 onComplete(emptyList())
             }
-
     }
 
-    fun removeTitle(titleId: String, listId: String, onResult: (Boolean) -> Unit) {
-        val listRef = db.document(
-            "${Constants.FIRESTORE.USERS_REF}/${uid}" +
-                    "/${Constants.FIRESTORE.WATCHLISTS_REF}/${listId}"
-        )
-
-        listRef.collection(Constants.FIRESTORE.TITLES_REF).document(titleId)
-            .delete().addOnSuccessListener {
-                onResult(true)
-                listRef.update("titleCount", FieldValue.increment(-1))
-            }.addOnFailureListener {
-                onResult(false)
-            }
-
-    }
 
     fun addWatchList(listName: String, onResult: (Boolean) -> Unit) {
         val watchlistRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
-            .collection(Constants.FIRESTORE.WATCHLISTS_REF).document(UUID.randomUUID().toString())
+            .collection(Constants.FIRESTORE.WATCHLISTS_REF)
+            .document(UUID.randomUUID().toString())
 
         val newList = Watchlist(
             id = watchlistRef.id,
-            listName = listName
+            listName = listName,
+            titleCount = 0,
+            items = emptyList()
         )
 
         watchlistRef.set(newList)
             .addOnSuccessListener {
                 Log.d(Constants.logMessage.FIRESTORE_KEY, "new list added")
                 onResult(true)
+            }.addOnFailureListener { e ->
+                Log.e(Constants.logMessage.FIRESTORE_KEY, "Error creating watchlist", e)
+                onResult(false)
             }
     }
 
     fun deleteWatchlist(listId: String, onResult: (Boolean) -> Unit) {
+        if (listId == Constants.FIRESTORE.FAVORITES) {
+            onResult(false)
+            return
+        }
+
         val listRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
             .collection(Constants.FIRESTORE.WATCHLISTS_REF).document(listId)
 
-        listRef.collection(Constants.FIRESTORE.TITLES_REF).get()
-            .addOnSuccessListener { snapshots ->
-                val batch = db.batch()
-
-                for (document in snapshots.documents) {
-                    batch.delete(document.reference)
-                }
-
-                batch.delete(listRef)
-
-                batch.commit().addOnSuccessListener {
-                    Log.d(
-                        Constants.logMessage.FIRESTORE_KEY,
-                        "List and all its movies deleted successfully"
-                    )
-                    onResult(true)
-                }
-                    .addOnFailureListener { e ->
-                        Log.e("Firestore", "Error deleting list: ${e.message}")
-                        onResult(false)
-                    }
+        listRef.delete()
+            .addOnSuccessListener {
+                Log.d(
+                    Constants.logMessage.FIRESTORE_KEY,
+                    "Watchlist document deleted successfully"
+                )
+                onResult(true)
             }
-            .addOnFailureListener { onResult(false) }
-
+            .addOnFailureListener { e ->
+                Log.e(Constants.logMessage.FIRESTORE_KEY, "Error deleting watchlist", e)
+                onResult(false)
+            }
     }
 
     fun showMyLists(onUpdate: (List<Watchlist>) -> Unit): ListenerRegistration? {
@@ -190,7 +320,11 @@ object FireStoreManager {
             } else {
                 if (snapshot != null) {
                     val watchLists = snapshot.toObjects(Watchlist::class.java)
-                    onUpdate(watchLists)
+                    val sortedLists =
+                        watchLists.sortedWith(compareByDescending<Watchlist> { it.id == "Favorites" }
+                            .thenBy { it.listName })
+
+                    onUpdate(sortedLists)
                 }
             }
 
@@ -202,12 +336,21 @@ object FireStoreManager {
     fun getFriendWatchlists(friendId: String, onComplete: (List<Watchlist>) -> Unit) {
         db.collection(Constants.FIRESTORE.USERS_REF).document(friendId)
             .collection(Constants.FIRESTORE.WATCHLISTS_REF)
-            .get() // קריאה חד פעמית
+            .get()
             .addOnSuccessListener { snapshot ->
                 val watchlists = snapshot.toObjects(Watchlist::class.java)
-                onComplete(watchlists)
+                val sortedLists =
+                    watchlists.sortedWith(compareByDescending<Watchlist> { it.id == "Favorites" }
+                        .thenBy { it.listName })
+
+                onComplete(sortedLists)
             }
             .addOnFailureListener {
+                Log.e(
+                    Constants.logMessage.FIRESTORE_KEY,
+                    "Error fetching friend's lists",
+                    it
+                )
                 onComplete(emptyList())
             }
     }
@@ -265,19 +408,30 @@ object FireStoreManager {
                 val user = snapshot.toObject(User::class.java)
                 onComplete(user)
             }
-            .addOnFailureListener {exception ->
-                Log.e(Constants.logMessage.FIRESTORE_KEY, "Error getting friend details", exception)
+            .addOnFailureListener { exception ->
+                Log.e(
+                    Constants.logMessage.FIRESTORE_KEY,
+                    "Error getting friend details",
+                    exception
+                )
                 onComplete(null)
             }
     }
 
-    fun observeFriendship(friendId: String, onStatusChanged: (Boolean) -> Unit): ListenerRegistration? {
+    fun observeFriendship(
+        friendId: String,
+        onStatusChanged: (Boolean) -> Unit
+    ): ListenerRegistration? {
         val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: return null
 
         return db.collection(Constants.FIRESTORE.USERS_REF).document(currentUid)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Log.e(Constants.logMessage.FIRESTORE_KEY, "Error observing friendship", error)
+                    Log.e(
+                        Constants.logMessage.FIRESTORE_KEY,
+                        "Error observing friendship",
+                        error
+                    )
                     return@addSnapshotListener
                 }
 
@@ -288,72 +442,75 @@ object FireStoreManager {
     }
 
 
-    fun searchUsers(searchName: String, callback: (List<User>) -> Unit){
+    fun searchUsers(searchName: String, callback: (List<User>) -> Unit) {
         val usersRef = db.collection(Constants.FIRESTORE.USERS_REF)
 
-        usersRef.orderBy("username").startAt(searchName).
-                endAt(searchName+"\uf8ff").get()
-            .addOnSuccessListener {docs ->
+        usersRef.orderBy("username").startAt(searchName).endAt(searchName + "\uf8ff").get()
+            .addOnSuccessListener { docs ->
                 val userList = mutableListOf<User>()
-                for(doc in docs){
+                for (doc in docs) {
                     val user = doc.toObject(User::class.java)
-                    if(user.uid != uid){
+                    if (user.uid != uid) {
                         userList.add(user)
                     }
                 }
                 Log.d(Constants.logMessage.FIRESTORE_KEY, "got users")
                 callback(userList)
-            }.addOnFailureListener {exception ->
-                Log.d(Constants.logMessage.FIRESTORE_KEY, Constants.logMessage.FAIL,exception)
+            }.addOnFailureListener { exception ->
+                Log.d(
+                    Constants.logMessage.FIRESTORE_KEY,
+                    Constants.logMessage.FAIL,
+                    exception
+                )
                 callback(emptyList())
             }
 
     }
 
-    fun addFavorite(title: MediaItem, onResult: (Boolean) -> Unit) {
-        Log.d("FirebaseCheck", "Current UID: $uid")
-        val userRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
-        val favRef = userRef.collection(Constants.FIRESTORE.FAVORITES)
+    /* fun addFavorite(title: MediaItem, onResult: (Boolean) -> Unit) {
+         Log.d("FirebaseCheck", "Current UID: $uid")
+         val userRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
+         val favRef = userRef.collection(Constants.FIRESTORE.FAVORITES)
 
-        favRef.document(title.id).set(title).addOnSuccessListener {
-            Log.d(Constants.logMessage.FIRESTORE_KEY, "added to Favorites")
-            userRef.update("favorites", FieldValue.arrayUnion(title.id))
-            onResult(true)
+         favRef.document(title.id).set(title).addOnSuccessListener {
+             Log.d(Constants.logMessage.FIRESTORE_KEY, "added to Favorites")
+             userRef.update("favorites", FieldValue.arrayUnion(title.id))
+             onResult(true)
 
-        }.addOnFailureListener {exception ->
-            Log.d(Constants.logMessage.FIRESTORE_KEY, "adding failed",exception)
-            onResult(false)
-        }
+         }.addOnFailureListener { exception ->
+             Log.d(Constants.logMessage.FIRESTORE_KEY, "adding failed", exception)
+             onResult(false)
+         }
 
-    }
+     }
 
-    fun deleteFavorite(titleId: String, onResult: (Boolean) -> Unit) {
-        val userRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
-        val favRef = userRef.collection(Constants.FIRESTORE.FAVORITES)
+     fun deleteFavorite(titleId: String, onResult: (Boolean) -> Unit) {
+         val userRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
+         val favRef = userRef.collection(Constants.FIRESTORE.FAVORITES)
 
-        favRef.document(titleId).delete().addOnSuccessListener {
-            Log.d(Constants.logMessage.FIRESTORE_KEY, "deleted from Favorites")
-            userRef.update("favorites", FieldValue.arrayRemove(titleId))
-            onResult(true)
+         favRef.document(titleId).delete().addOnSuccessListener {
+             Log.d(Constants.logMessage.FIRESTORE_KEY, "deleted from Favorites")
+             userRef.update("favorites", FieldValue.arrayRemove(titleId))
+             onResult(true)
 
-        }.addOnFailureListener {
-            Log.d(Constants.logMessage.FIRESTORE_KEY, "delete failed",it)
-            onResult(false)
-        }
-    }
+         }.addOnFailureListener {
+             Log.d(Constants.logMessage.FIRESTORE_KEY, "delete failed", it)
+             onResult(false)
+         }
+     }
 
-    fun showFavorites(userId: String, onComplete: (List<MediaItem>) -> Unit) {
-        db.collection(Constants.FIRESTORE.USERS_REF).document(userId)
-            .collection(Constants.FIRESTORE.FAVORITES)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val movies = snapshot.toObjects(MediaItem::class.java)
-                onComplete(movies)
-            }.addOnFailureListener {
-                onComplete(emptyList())
-            }
+     fun showFavorites(userId: String, onComplete: (List<MediaItem>) -> Unit) {
+         db.collection(Constants.FIRESTORE.USERS_REF).document(userId)
+             .collection(Constants.FIRESTORE.FAVORITES)
+             .get()
+             .addOnSuccessListener { snapshot ->
+                 val movies = snapshot.toObjects(MediaItem::class.java)
+                 onComplete(movies)
+             }.addOnFailureListener {
+                 onComplete(emptyList())
+             }
 
-    }
+     }*/
 
     fun saveUserRating(titleId: String, rating: Float, onComplete: (Boolean) -> Unit) {
 
@@ -363,7 +520,8 @@ object FireStoreManager {
         )
 
         db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
-            .collection(Constants.FIRESTORE.RATINGS).document(titleId) // ה-ID של הסרט הוא שם המסמך
+            .collection(Constants.FIRESTORE.RATINGS)
+            .document(titleId) // ה-ID של הסרט הוא שם המסמך
             .set(data)
             .addOnCompleteListener { onComplete(it.isSuccessful) }
     }
@@ -393,8 +551,8 @@ object FireStoreManager {
 
         storageRef.putFile(uri).continueWithTask { task ->
             if (!task.isSuccessful) {
-                task.exception?.let {exception ->
-                    Log.d(Constants.logMessage.STORAGE_KEY,"upload failed",exception)
+                task.exception?.let { exception ->
+                    Log.d(Constants.logMessage.STORAGE_KEY, "upload failed", exception)
                 }
             }
             storageRef.downloadUrl
@@ -407,7 +565,11 @@ object FireStoreManager {
                         if (updateTask.isSuccessful) {
                             onComplete(downloadUri)
                         } else {
-                            Log.d(Constants.logMessage.STORAGE_KEY,"upload failed",task.exception)
+                            Log.d(
+                                Constants.logMessage.STORAGE_KEY,
+                                "upload failed",
+                                task.exception
+                            )
                             onComplete(null)
                         }
                     }
@@ -417,6 +579,10 @@ object FireStoreManager {
 
         }
 
+    }
+
+    fun clearData() {
+        currentUser = null
     }
 
 }

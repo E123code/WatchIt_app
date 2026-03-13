@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.watchit_movieapp.adapters.UserAdapter
 import com.example.watchit_movieapp.databinding.ActivitySearchUsersBinding
 import com.example.watchit_movieapp.interfaces.UserClickedCallback
-import com.example.watchit_movieapp.model.User
 import com.example.watchit_movieapp.utilities.Constants
 import com.example.watchit_movieapp.utilities.FireStoreManager
 
@@ -105,7 +104,7 @@ class SearchUsersActivity : AppCompatActivity() {
 
     private fun searchUsers(query: String){
         val cleanQuery  = query.trim()
-        FireStoreManager.searchUsers(cleanQuery){users ->
+        FireStoreManager.getInstance().searchUsers(cleanQuery){users ->
             if(users.isEmpty()){
                 binding.RVResults.visibility = View.GONE
                 binding.NoResultsLBL.visibility = View.VISIBLE

@@ -12,8 +12,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.watchit_movieapp.R
 import com.example.watchit_movieapp.adapters.MediaAdapter
 import com.example.watchit_movieapp.databinding.SearchFragmentBinding
-import com.example.watchit_movieapp.interfaces.TitleCallback
 import com.example.watchit_movieapp.interfaces.MediaItemClickedCallback
+import com.example.watchit_movieapp.interfaces.TitleCallback
 import com.example.watchit_movieapp.model.MediaItem
 import com.example.watchit_movieapp.utilities.AdapterMode
 import com.example.watchit_movieapp.utilities.Constants
@@ -34,7 +34,11 @@ class SearchFragment : Fragment() {
 
     private lateinit var mediaAdapter: MediaAdapter
 
-
+     private val userObserver: (com.example.watchit_movieapp.model.User?) -> Unit = { _ ->
+         if (isAdded && !isHidden) {
+             refreshUI()
+         }
+     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -49,9 +53,6 @@ class SearchFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupRecyclerView()
-
-
-
         setupSearchAndFilters()
 
         if (resultsList.isNotEmpty()) {
@@ -60,7 +61,7 @@ class SearchFragment : Fragment() {
             binding.genresScrollView.visibility = View.VISIBLE
 
         }
-
+        FireStoreManager.getInstance().addObserver(userObserver)
     }
 
 
@@ -70,38 +71,44 @@ class SearchFragment : Fragment() {
                 openDetails(mediaItem)
             }
         }
-        mediaAdapter = MediaAdapter(emptyList(), AdapterMode.NATURAL,callback=callback)
+        mediaAdapter = MediaAdapter(emptyList(), AdapterMode.NATURAL, callback = callback)
 
         mediaAdapter.titleCallback = object : TitleCallback {
             override fun favoriteButtonClicked(title: MediaItem, position: Int) {
+                val viewHolder =
+                    binding.results.findViewHolderForAdapterPosition(position) as? MediaAdapter.MediaViewHolder
+                viewHolder?.binding?.IMGFavorite?.isEnabled = false
+
                 val previous = title.isFavorite
                 title.toggleFavorite()
-                SignalManager.getInstance().vibrate()
                 mediaAdapter.notifyItemChanged(position)
+                SignalManager.getInstance().vibrate()
 
                 if (title.isFavorite) {
-                    FireStoreManager.addFavorite(title) { success ->
-                        if (!success) {
-                            title.isFavorite = previous
-                            mediaAdapter.notifyItemChanged(position)
-                            SignalManager.getInstance()
-                                .toast("Connection error", SignalManager.ToastLength.SHORT)
-                        } else {
-                            SignalManager.getInstance()
-                                .toast("added to favorites", SignalManager.ToastLength.SHORT)
+                    FireStoreManager.getInstance()
+                        .addTitle(title, Constants.FIRESTORE.FAVORITES) { result ->
+                            viewHolder?.binding?.IMGFavorite?.isEnabled = true // שחרור הנעילה
+                            if (result != Constants.logMessage.SUCCESS) {
+                                title.isFavorite = previous
+                                mediaAdapter.notifyItemChanged(position)
+                                SignalManager.getInstance()
+                                    .toast("error", SignalManager.ToastLength.SHORT)
+                            } else {
+                                SignalManager.getInstance()
+                                    .toast("added to favorites", SignalManager.ToastLength.SHORT)
+                            }
                         }
-
-                    }
                 } else {
-                    FireStoreManager.deleteFavorite(title.id) { success ->
-                        if (!success) {
-                            title.isFavorite = previous
-                            mediaAdapter.notifyItemChanged(position)
-                        } else {
-                            SignalManager.getInstance()
-                                .toast("deleted from favorites", SignalManager.ToastLength.SHORT)
+                    FireStoreManager.getInstance()
+                        .removeTitle(title.id, Constants.FIRESTORE.FAVORITES) { success ->
+                            viewHolder?.binding?.IMGFavorite?.isEnabled = true // שחרור הנעילה
+                            if (!success) {
+                                title.isFavorite = previous
+                                mediaAdapter.notifyItemChanged(position)
+                                SignalManager.getInstance()
+                                    .toast("deleted from favorites", SignalManager.ToastLength.SHORT)
+                            }
                         }
-                    }
                 }
             }
 
@@ -154,7 +161,9 @@ class SearchFragment : Fragment() {
                 resultsList =
                     response.results.filter { mediaItem -> mediaItem.mediaType == "tv" || mediaItem.mediaType == "movie" }
 
-                resultsList.forEach { it.isFavorite = FireStoreManager.isInFavorites(it.id) }
+                /*
+                                resultsList.forEach { it.isFavorite = FireStoreManager.getInstance().isInFavorites(it.id) }
+                */
 
                 binding.genresScrollView.visibility = View.VISIBLE
                 binding.chipGroupGenres.clearCheck()
@@ -200,7 +209,7 @@ class SearchFragment : Fragment() {
                     else -> {
                         val validIds = GenresMap.getIdsByKeyword(chipText)
                         val hasGenres = item.genreIds?.any { it in validIds } ?: false
-                        if (!hasGenres ) {
+                        if (!hasGenres) {
                             matches = false
                         }
                     }
@@ -211,35 +220,39 @@ class SearchFragment : Fragment() {
         mediaAdapter.updateData(filteredList)
     }
 
-    override fun onHiddenChanged(hidden: Boolean) {
-        super.onHiddenChanged(hidden)
-        if (!hidden) {
-            refreshSearchHearts()
+
+    /*    private fun refreshSearchHearts() {
+            resultsList.forEach {
+                it.isFavorite = FireStoreManager.getInstance().isInFavorites(it.id)
+            }
+            mediaAdapter.notifyDataSetChanged()
+        }*/
+
+    private fun refreshUI() {
+        if (::mediaAdapter.isInitialized && resultsList.isNotEmpty()) {
+            mediaAdapter.syncFavorites()
         }
     }
 
-
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden) {
+            refreshUI()
+        }
+    }
 
 
     override fun onResume() {
         super.onResume()
         if (!isHidden) {
-            refreshSearchHearts()
+            refreshUI()
         }
     }
-
-    private fun refreshSearchHearts() {
-        resultsList.forEach {
-            it.isFavorite = FireStoreManager.isInFavorites(it.id)
-        }
-        mediaAdapter.notifyDataSetChanged()
-    }
-
-
 
 
     override fun onDestroyView() {
         super.onDestroyView()
+        FireStoreManager.getInstance().removeObserver(userObserver)
         _binding = null
     }
 

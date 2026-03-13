@@ -31,7 +31,6 @@ class DetailsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityDetailsBinding
 
-    // אדפטרים לשחקנים וספקים
     private lateinit var castAdapter: CastAdapter
     private lateinit var providerAdapter: ProviderAdapter
 
@@ -64,8 +63,6 @@ class DetailsActivity : AppCompatActivity() {
         binding.BTNBack.setOnClickListener {
             finish()
         }
-
-
 
         if (id != -1) {
             fetchDetails(id, type)
@@ -114,13 +111,13 @@ class DetailsActivity : AppCompatActivity() {
         binding.genresDetails.text = details.genres
         binding.ratingBar.rating = (details.rating / 2).toFloat()
 
-        FireStoreManager.getUserRating(id) { rating ->
+        FireStoreManager.getInstance().getUserRating(id) { rating ->
             binding.personalRate.rating = rating ?: 0f
         }
 
         binding.personalRate.setOnRatingBarChangeListener { _, rating, fromUser ->
             if (fromUser) {
-                FireStoreManager.saveUserRating(id, rating) { success ->
+                FireStoreManager.getInstance().saveUserRating(id, rating) { success ->
                     if (success) SignalManager.getInstance()
                         .toast("Rated: $rating", SignalManager.ToastLength.SHORT)
                 }
@@ -128,39 +125,11 @@ class DetailsActivity : AppCompatActivity() {
 
         }
 
-        details.isFavorite = FireStoreManager.isInFavorites(id)
+        details.isFavorite = FireStoreManager.getInstance().isInFavorites(id)
         updateHeartUI(details.isFavorite)
 
         binding.BTNFavorite.setOnClickListener {
-            details.toggleFavorite()
-            SignalManager.getInstance().vibrate()
-            updateHeartUI(details.isFavorite)
-            if (details.isFavorite) {
-                FireStoreManager.addFavorite(details.toMediaItem()) { success ->
-                    if (!success) {
-                        details.toggleFavorite()
-                        updateHeartUI(details.isFavorite)
-                        SignalManager.getInstance()
-                            .toast("Connection error", SignalManager.ToastLength.SHORT)
-                    } else {
-                        SignalManager.getInstance()
-                            .toast("added to favorites", SignalManager.ToastLength.SHORT)
-                    }
-
-                }
-            } else {
-                FireStoreManager.deleteFavorite(id) { success ->
-                    if (!success) {
-                        details.toggleFavorite()
-                        updateHeartUI(details.isFavorite)
-                    } else {
-                        SignalManager.getInstance()
-                            .toast("deleted from favorites", SignalManager.ToastLength.SHORT)
-                    }
-                }
-            }
-
-
+            favoriteClick(details)
         }
 
 
@@ -179,6 +148,49 @@ class DetailsActivity : AppCompatActivity() {
 
     }
 
+    private fun favoriteClick(details: TitleDetails) {
+        binding.BTNFavorite.isEnabled = false
+
+        val wasFavorite = details.isFavorite
+
+        details.toggleFavorite()
+        updateHeartUI(details.isFavorite)
+        SignalManager.getInstance().vibrate()
+
+        if (details.isFavorite) {
+            FireStoreManager.getInstance()
+                .addTitle(details.toMediaItem(), Constants.FIRESTORE.FAVORITES) { result ->
+                    binding.BTNFavorite.isEnabled = true
+
+                    if (result != Constants.logMessage.SUCCESS) {
+                        details.isFavorite = wasFavorite
+                        updateHeartUI(wasFavorite)
+                        SignalManager.getInstance()
+                            .toast("Connection error", SignalManager.ToastLength.SHORT)
+                    } else {
+                        SignalManager.getInstance()
+                            .toast("Added to favorites", SignalManager.ToastLength.SHORT)
+                    }
+                }
+        } else {
+            FireStoreManager.getInstance()
+                .removeTitle(details.id.toString(), Constants.FIRESTORE.FAVORITES) { success ->
+                    binding.BTNFavorite.isEnabled = true
+
+                    if (!success) {
+                        details.isFavorite = wasFavorite
+                        updateHeartUI(wasFavorite)
+                        SignalManager.getInstance()
+                            .toast("Connection error", SignalManager.ToastLength.SHORT)
+                    } else {
+                        SignalManager.getInstance()
+                            .toast("Removed from favorites", SignalManager.ToastLength.SHORT)
+                    }
+                }
+        }
+    }
+
+
     private fun updateHeartUI(isFavorite: Boolean) {
         val icon = if (isFavorite) R.drawable.heart else R.drawable.empty_heart
         binding.BTNFavorite.setImageResource(icon)
@@ -195,6 +207,61 @@ class DetailsActivity : AppCompatActivity() {
         }
     }
 
+    private fun showWatchlistBottomSheet(details: TitleDetails) {
+        val dialog = BottomSheetDialog(this, R.style.BottomSheetStyle)
+        val sheetBinding = DialogWatchlistsBinding.inflate(layoutInflater)
+        dialog.setContentView(sheetBinding.root)
+
+
+        FireStoreManager.getInstance().showMyLists { watchLists ->
+            val filteredList = watchLists.filter{it.id != Constants.FIRESTORE.FAVORITES }
+            if (filteredList.isEmpty()) {
+                sheetBinding.rvLists.visibility = View.GONE
+                sheetBinding.LBLNoLists.visibility = View.VISIBLE
+            } else {
+                sheetBinding.rvLists.visibility = View.VISIBLE
+                sheetBinding.LBLNoLists.visibility = View.GONE
+                val callback = object : AddCallback {
+                    override fun watchlistClicked(watchlist: Watchlist) {
+                        FireStoreManager.getInstance()
+                            .addTitle(details.toMediaItem(), watchlist.id) { result ->
+                                sheetBinding.rvLists.isEnabled = true
+
+                                when (result) {
+                                    Constants.logMessage.SUCCESS -> {
+                                        SignalManager.getInstance().toast(
+                                            "Added to ${watchlist.listName}",
+                                            SignalManager.ToastLength.SHORT
+                                        )
+                                        dialog.dismiss()
+                                    }
+
+                                    Constants.logMessage.EXISTS -> {
+                                        SignalManager.getInstance().toast(
+                                            "Already in  ${watchlist.listName}",
+                                            SignalManager.ToastLength.LONG
+                                        )
+                                    }
+
+                                    else -> {
+                                        SignalManager.getInstance().toast(
+                                            "Error, please try again",
+                                            SignalManager.ToastLength.SHORT
+                                        )
+                                    }
+                                }
+                            }
+                    }
+                }
+                val adapter = ListSelectAdapter(filteredList, details.id.toString(), callback)
+
+                sheetBinding.rvLists.adapter = adapter
+                sheetBinding.rvLists.layoutManager = LinearLayoutManager(this)
+            }
+        }
+        dialog.show()
+    }
+
     private fun TitleDetails.toMediaItem() = com.example.watchit_movieapp.model.MediaItem(
         id = this.id.toString(),
         title = if (this.mediaType == "movie") this.name else null,
@@ -206,58 +273,4 @@ class DetailsActivity : AppCompatActivity() {
         overview = this.overview,
         mediaType = this.mediaType ?: "Unknown"
     )
-
-    private fun showWatchlistBottomSheet(details: TitleDetails) {
-        val dialog = BottomSheetDialog(this, R.style.BottomSheetStyle)
-        val sheetBinding = DialogWatchlistsBinding.inflate(layoutInflater)
-        dialog.setContentView(sheetBinding.root)
-
-
-        FireStoreManager.showMyLists { watchLists ->
-            if (watchLists.isEmpty()) {
-                sheetBinding.rvLists.visibility = View.GONE
-                sheetBinding.LBLNoLists.visibility = View.VISIBLE
-            } else {
-                sheetBinding.rvLists.visibility = View.VISIBLE
-                sheetBinding.LBLNoLists.visibility = View.GONE
-                val callback = object : AddCallback {
-                    override fun watchlistClicked(watchlist: Watchlist) {
-                        sheetBinding.rvLists.isEnabled = false
-                        FireStoreManager.addTitle(details.toMediaItem(), watchlist.id) { result ->
-                            sheetBinding.rvLists.isEnabled = true // החזרת האפשרות ללחוץ
-
-                            when (result) {
-                                Constants.logMessage.SUCCESS -> {
-                                    SignalManager.getInstance().toast(
-                                        "Added to ${watchlist.listName}",
-                                        SignalManager.ToastLength.SHORT
-                                    )
-                                    dialog.dismiss()
-                                }
-
-                                Constants.logMessage.EXISTS -> {
-                                    SignalManager.getInstance().toast(
-                                        "Already in  ${watchlist.listName}",
-                                        SignalManager.ToastLength.LONG
-                                    )
-                                }
-
-                                else -> {
-                                    SignalManager.getInstance().toast(
-                                        "Error, please try again",
-                                        SignalManager.ToastLength.SHORT
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-                val adapter = ListSelectAdapter(watchLists, callback)
-
-                sheetBinding.rvLists.adapter = adapter
-                sheetBinding.rvLists.layoutManager = LinearLayoutManager(this)
-            }
-            dialog.show()
-        }
-    }
 }

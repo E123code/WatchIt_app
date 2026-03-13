@@ -79,7 +79,7 @@ class AuthLoginActivity : AppCompatActivity() {
 
             if (isNewUser) {
                 if(user != null)
-                    FireStoreManager.createUser(user)
+                    FireStoreManager.getInstance().createUser(user)
             } else {
                 SignalManager.getInstance().toast(
                     "Hello ${user?.displayName}",

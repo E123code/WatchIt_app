@@ -29,14 +29,18 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvLists"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         app:layout_constrainedHeight="true"
         app:layout_constraintHeight_max="350dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
+        android:scrollbars="vertical"
         android:clipToPadding="false"
         tools:listitem="@layout/list_select_item"/>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
 
     <TextView
         android:id="@+id/LBL_no_lists"
@@ -49,9 +53,6 @@
         android:visibility="gone"
         android:layout_gravity="center"
         android:padding="20dp" />
-
-
-</androidx.constraintlayout.widget.ConstraintLayout>
 
 
 </LinearLayout>

@@ -1,7 +1,6 @@
 package com.example.watchit_movieapp.adapters
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
@@ -19,8 +18,8 @@ class WatchlistAdapter(
     private val callback: ListClickedCallback
 ) :RecyclerView.Adapter<WatchlistAdapter.WatchlistViewHolder>() {
 
-    fun updateData(newLists: List<Watchlist>,favCount: Int) {
-        val fullList = mutableListOf<Watchlist>()
+    fun updateData(newLists: List<Watchlist>) {
+     /*   val fullList = mutableListOf<Watchlist>()
 
         fullList.add(
             Watchlist(
@@ -28,8 +27,8 @@ class WatchlistAdapter(
             )
         )
 
-        fullList.addAll(newLists)
-        this.lists = fullList
+        fullList.addAll(newLists)*/
+        this.lists = newLists
         notifyDataSetChanged()
     }
 
