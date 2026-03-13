@@ -20,7 +20,7 @@ class FireStoreManager private constructor(context: Context) {
     companion object {
         @Volatile
         private var instance: FireStoreManager? = null
-        fun init(context: android.content.Context): FireStoreManager {
+        fun init(context:Context): FireStoreManager {
             return instance ?: synchronized(this) {
                 instance
                     ?: FireStoreManager(context).also { instance = it }

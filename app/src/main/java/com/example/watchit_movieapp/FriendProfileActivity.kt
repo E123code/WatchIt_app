@@ -9,12 +9,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.watchit_movieapp.adapters.UserAdapter
 import com.example.watchit_movieapp.adapters.WatchlistAdapter
 import com.example.watchit_movieapp.databinding.ActivityFriendProfieBinding
-import com.example.watchit_movieapp.databinding.ProfileFragmentBinding
 import com.example.watchit_movieapp.interfaces.ListClickedCallback
 import com.example.watchit_movieapp.interfaces.UserClickedCallback
 import com.example.watchit_movieapp.model.User
