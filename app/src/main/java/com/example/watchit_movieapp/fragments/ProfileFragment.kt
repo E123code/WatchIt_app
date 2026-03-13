@@ -85,15 +85,16 @@ class ProfileFragment : Fragment() {
     }
 
 
-     fun loadUser(user: User?) {
+    fun loadUser(user: User?) {
 
-         if (_binding == null || user == null) return
+        if (_binding == null || user == null) return
 
 
         binding.Name.text = user.username
         binding.email.text = user.email
         if (user.profileImageUrl.isNotEmpty()) {
-            ImageLoader.getInstance().loadProfile(user.profileImageUrl, binding.ProfileIMG)
+            ImageLoader.getInstance().loadProfile(user.profileImageUrl, binding.ProfileIMG,
+                progressBar = binding.profileProgressBar)
         }
 
 
@@ -139,6 +140,9 @@ class ProfileFragment : Fragment() {
     }
 
     private fun uploadImage(uri: Uri) {
+
+        binding.profileProgressBar.visibility = View.VISIBLE
+
         FireStoreManager.getInstance().uploadProfileImage(uri) { profileUri ->
             if (profileUri != null) {
                 SignalManager.getInstance()
@@ -153,7 +157,7 @@ class ProfileFragment : Fragment() {
 
     }
 
-    private fun logoutLogic(){
+    private fun logoutLogic() {
         FirebaseAuth.getInstance().signOut()
         FireStoreManager.getInstance().clearData()
 
@@ -163,22 +167,6 @@ class ProfileFragment : Fragment() {
 
         activity?.finish()
     }
-
-
-
-/*    override fun onHiddenChanged(hidden: Boolean) {
-        super.onHiddenChanged(hidden)
-        if (!hidden) {
-            loadUser()
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (!isHidden) {
-            loadUser()
-        }
-    }*/
 
 
     override fun onDestroyView() {

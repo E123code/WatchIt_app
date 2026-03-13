@@ -32,16 +32,7 @@ class ListsFragment : Fragment() {
 
     private var listsListener: ListenerRegistration? = null
 
-    /*  private val userObserver: (com.example.watchit_movieapp.model.User?) -> Unit = { user ->
-          user?.let {
-              val newFavCount = it.favorites.size
-              if (::watchlistAdapter.isInitialized && watchlistAdapter.lists.isNotEmpty()) {
-                  watchlistAdapter.lists[0].titleCount = newFavCount
-                  watchlistAdapter.notifyItemChanged(0)
-              }
-          }
-      }
-  */
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -54,14 +45,6 @@ class ListsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupRecyclerView()
-
-        /* listsListener = FireStoreManager.getInstance().showMyLists { watchlists ->
-             val currentFavCount = FireStoreManager.getInstance().currentUser?.favorites?.size ?: 0
-             watchlistAdapter.updateData(watchlists, currentFavCount)
-         }
- */
-//        FireStoreManager.getInstance().addObserver(userObserver)
-
 
         binding.BTNAddList.setOnClickListener {
             addList()
@@ -207,19 +190,9 @@ class ListsFragment : Fragment() {
 
 
 
-   /*     private fun refreshFavCount() {
-            val currentFavCount = FireStoreManager.getInstance().currentUser?.favorites?.size ?: 0
-            if (::watchlistAdapter.isInitialized && watchlistAdapter.lists.isNotEmpty()) {
-                watchlistAdapter.lists[0].titleCount = currentFavCount
-                watchlistAdapter.notifyItemChanged(0)
-            }
-        }*/
-
-
     override fun onDestroyView() {
         super.onDestroyView()
         listsListener?.remove()
-//        FireStoreManager.getInstance().removeObserver(userObserver)
         _binding = null
     }
 

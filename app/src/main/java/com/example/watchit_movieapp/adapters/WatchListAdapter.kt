@@ -19,15 +19,6 @@ class WatchlistAdapter(
 ) :RecyclerView.Adapter<WatchlistAdapter.WatchlistViewHolder>() {
 
     fun updateData(newLists: List<Watchlist>) {
-     /*   val fullList = mutableListOf<Watchlist>()
-
-        fullList.add(
-            Watchlist(
-                Constants.FIRESTORE.FAVORITES, "Favorites",favCount
-            )
-        )
-
-        fullList.addAll(newLists)*/
         this.lists = newLists
         notifyDataSetChanged()
     }

@@ -75,11 +75,6 @@ class HomeFragment : Fragment() {
         }
     }
 
-    /*   private fun applyCurrentFavorites(items: List<MediaItem>) {
-           val favorites = FireStoreManager.getInstance().currentUser?.favorites ?: emptyList()
-           items.forEach { it.isFavorite = favorites.contains(it.id) }
-       }*/
-
 
     private fun setupRecyclerView() {
         val callback = object : MediaItemClickedCallback {
@@ -176,7 +171,6 @@ class HomeFragment : Fragment() {
                     response.results.forEach {
                         it.mediaType = "movie"
                     }
-//                    applyCurrentFavorites(response.results)
                     cachedMovies = response.results
                     mediaAdapter.updateData(response.results)
                 }
@@ -201,7 +195,7 @@ class HomeFragment : Fragment() {
                     response.results.forEach {
                         it.mediaType = "tv"
                     }
-//                    applyCurrentFavorites(response.results)
+
                     cachedTVShows = response.results
                     mediaAdapter.updateData(response.results)
                 }

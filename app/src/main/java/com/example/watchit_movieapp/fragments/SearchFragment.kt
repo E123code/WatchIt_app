@@ -161,10 +161,6 @@ class SearchFragment : Fragment() {
                 resultsList =
                     response.results.filter { mediaItem -> mediaItem.mediaType == "tv" || mediaItem.mediaType == "movie" }
 
-                /*
-                                resultsList.forEach { it.isFavorite = FireStoreManager.getInstance().isInFavorites(it.id) }
-                */
-
                 binding.genresScrollView.visibility = View.VISIBLE
                 binding.chipGroupGenres.clearCheck()
 
@@ -220,13 +216,6 @@ class SearchFragment : Fragment() {
         mediaAdapter.updateData(filteredList)
     }
 
-
-    /*    private fun refreshSearchHearts() {
-            resultsList.forEach {
-                it.isFavorite = FireStoreManager.getInstance().isInFavorites(it.id)
-            }
-            mediaAdapter.notifyDataSetChanged()
-        }*/
 
     private fun refreshUI() {
         if (::mediaAdapter.isInitialized && resultsList.isNotEmpty()) {

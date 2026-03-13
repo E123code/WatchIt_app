@@ -115,6 +115,11 @@ class FriendProfileActivity : AppCompatActivity() {
 
         binding.BTNBack.setOnClickListener { finish() }
 
+        val myId = FireStoreManager.getInstance().currentUser?.uid?:""
+        if (friendId == myId){
+            binding.BTNFriendAction.visibility = View.GONE
+        }
+
         binding.BTNFriendAction.setOnClickListener {
             val id = friendId
             if (id != null) {

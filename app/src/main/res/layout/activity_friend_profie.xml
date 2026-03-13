@@ -69,6 +69,7 @@
                 android:textStyle="bold"
                 android:backgroundTint="@color/friend_btn_background"
                 app:icon="@drawable/friend_btn_icon"
+                app:iconTint="@color/friend_btn_icon_tint"
                 />
 
         </androidx.appcompat.widget.LinearLayoutCompat>

@@ -26,7 +26,7 @@ class WatchlistActivity : AppCompatActivity() {
     private lateinit var binding: ActivityWatchlistBinding
     private lateinit var mediaAdapter: MediaAdapter
 
-
+    private  var myId : String = ""
     private var listOwner: String = ""
     private var listID: String = ""
     private var listName: String = ""
@@ -37,16 +37,15 @@ class WatchlistActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         binding = ActivityWatchlistBinding.inflate(layoutInflater)
-
         enableEdgeToEdge()
         setContentView(binding.root)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        myId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
         initViews()
         FireStoreManager.getInstance().addObserver(userObserver)
@@ -68,7 +67,7 @@ class WatchlistActivity : AppCompatActivity() {
     }
 
     private fun setupRecycleView() {
-        val myId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
         val mode = when {
             myId != listOwner -> AdapterMode.FRIEND_MODE
             listID == Constants.FIRESTORE.FAVORITES -> AdapterMode.NATURAL
@@ -117,7 +116,7 @@ class WatchlistActivity : AppCompatActivity() {
                                 SignalManager.getInstance()
                                     .toast("error", SignalManager.ToastLength.SHORT)
                             } else {
-                                if (listID == Constants.FIRESTORE.FAVORITES) {
+                                if (listID == Constants.FIRESTORE.FAVORITES&& listOwner == myId){
                                     removeLocally(position)
                                 } else {
                                     viewHolder?.binding?.IMGFavorite?.isEnabled = true
@@ -133,39 +132,7 @@ class WatchlistActivity : AppCompatActivity() {
                 }
             }
 
-            /* override fun favoriteButtonClicked(title: MediaItem, position: Int) {
-                 SignalManager.getInstance().vibrate()
-                 val isCurrentlyFav = FireStoreManager.getInstance().isInFavorites(title.id)
-                 if (!isCurrentlyFav) {
-                     FireStoreManager.getInstance().addTitle(title, Constants.FIRESTORE.FAVORITES) { result ->
-                         if (result == Constants.logMessage.SUCCESS) {
-                             mediaAdapter.notifyItemChanged(position)
-                             SignalManager.getInstance()
-                                 .toast("added to favorites", SignalManager.ToastLength.SHORT)
-                         } else {
-                             SignalManager.getInstance()
-                                 .toast("Connection error", SignalManager.ToastLength.SHORT)
-                         }
-                     }
-                 } else {
-                     FireStoreManager.getInstance().removeTitle(title.id,Constants.FIRESTORE.FAVORITES) { success ->
-                         if (success) {
-                             if (listID == Constants.FIRESTORE.FAVORITES) {
-                                 removeLocally(position)
-                             }else{
-                                 mediaAdapter.notifyItemChanged(position)
-                             }
-                             SignalManager.getInstance()
-                                 .toast("deleted from favorites", SignalManager.ToastLength.SHORT)
 
-                         }else{
-                             SignalManager.getInstance()
-                                 .toast("Connection error", SignalManager.ToastLength.SHORT)
-                         }
-                     }
-                 }
-             }
- */
             override fun deleteButtonClicked(title: MediaItem, position: Int) {
                 FireStoreManager.getInstance().removeTitle(title.id, listID) { success ->
                     if (success) {
@@ -182,11 +149,6 @@ class WatchlistActivity : AppCompatActivity() {
 
     }
 
-    /*   private fun abortChange(item: MediaItem, previousState: Boolean, position: Int) {
-           item.isFavorite = previousState
-           mediaAdapter.notifyItemChanged(position)
-           SignalManager.getInstance().toast("Connection error", SignalManager.ToastLength.SHORT)
-       }*/
 
     private fun removeLocally(position: Int) {
         mediaAdapter.removeItem(position)
@@ -197,23 +159,6 @@ class WatchlistActivity : AppCompatActivity() {
     }
 
     private fun loadTitles() {
-        /* if (listID == Constants.FIRESTORE.FAVORITES) {
-             FireStoreManager.getInstance().showMyLists {  }(listOwner) { titles ->
-                 showList(titles)
-             }
-         } else {
-             FireStoreManager.getInstance().loadWatchlist(listOwner, listID) { titles ->
-
-                 val myFavoritesIds =
-                     FireStoreManager.getInstance().currentUser?.favorites ?: emptyList()
-
-                 titles.forEach { title ->
-                     title.isFavorite = myFavoritesIds.contains(title.id)
-                 }
-                 showList(titles)
-             }
-         }*/
-
         FireStoreManager.getInstance().loadWatchlist(listOwner, listID) { titles ->
             showList(titles)
         }
@@ -233,7 +178,7 @@ class WatchlistActivity : AppCompatActivity() {
     private fun refreshUI() {
         if (::mediaAdapter.isInitialized) {
 
-            if (listID == Constants.FIRESTORE.FAVORITES) {
+            if (listID == Constants.FIRESTORE.FAVORITES && listOwner == myId) {
                 val updatedList =
                     mediaAdapter.currentItems.filter { item ->
                         FireStoreManager.getInstance().isInFavorites(item.id)
@@ -259,10 +204,6 @@ class WatchlistActivity : AppCompatActivity() {
         refreshUI()
     }
 
-//    override fun onRestart() {
-//        super.onRestart()
-//
-//    }
 
     override fun onDestroy() {
         super.onDestroy()
