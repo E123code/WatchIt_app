@@ -29,15 +29,16 @@
     <string name="remove_friend" translatable="false">Remove Friend</string>
     <string name="no_other_lists_found" translatable="false">No other lists found</string>
     <string name="choose_favorite" translatable="false">choose favorite</string>
+    <string name="rating" translatable="false">Rating:</string>
+    <string name="your_rating" translatable="false">Your Rating:</string>
+    <string name="overview" translatable="false">Overview</string>
+    <string name="cast" translatable="false">Cast</string>
+    <string name="no_streaming" translatable="false">There are no streaming platforms available in your region.</string>
+
     <!--for firebaseUI-->
 
     <string name="fui_name_hint">Username</string>
     <string name="fui_missing_first_and_last_name">Enter name</string>
-    <string name="rating">Rating:</string>
-    <string name="your_rating">Your Rating:</string>
-    <string name="overview">Overview</string>
-    <string name="cast">Cast</string>
-    <string name="no_streaming">There are no streaming platforms available in your region.</string>
 
 
 </resources>
