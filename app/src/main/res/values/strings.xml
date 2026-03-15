@@ -34,11 +34,12 @@
     <string name="overview" translatable="false">Overview</string>
     <string name="cast" translatable="false">Cast</string>
     <string name="no_streaming" translatable="false">There are no streaming platforms available in your region.</string>
-
+    <string name="where_to_watch" translatable="false">Where to watch?</string>
     <!--for firebaseUI-->
 
     <string name="fui_name_hint">Username</string>
     <string name="fui_missing_first_and_last_name">Enter name</string>
+
 
 
 </resources>
