@@ -11,7 +11,7 @@ import com.example.watchit_movieapp.model.Watchlist
 import com.example.watchit_movieapp.utilities.AdapterMode
 import com.example.watchit_movieapp.utilities.Constants
 
-
+//adapter to show the watchLists of the user
 class WatchlistAdapter(
     var lists: List<Watchlist> = emptyList(),
     private val mode: AdapterMode,

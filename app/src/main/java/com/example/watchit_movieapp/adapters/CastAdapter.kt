@@ -7,7 +7,7 @@ import com.example.watchit_movieapp.databinding.CastMemberBinding
 import com.example.watchit_movieapp.model.CastMember
 import com.example.watchit_movieapp.utilities.ImageLoader
 
-
+//the adapter for cast member
 class CastAdapter : RecyclerView.Adapter<CastAdapter.CastViewHolder>() {
 
     private var castList: List<CastMember> = emptyList()

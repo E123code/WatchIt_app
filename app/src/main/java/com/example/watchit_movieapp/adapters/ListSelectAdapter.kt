@@ -8,6 +8,7 @@ import com.example.watchit_movieapp.databinding.ListSelectItemBinding
 import com.example.watchit_movieapp.interfaces.AddCallback
 import com.example.watchit_movieapp.model.Watchlist
 
+//adapter for selecting list in the bottom sheet
 class ListSelectAdapter(
     private val lists: List<Watchlist>,
     private val currentTitleId: String,
@@ -33,11 +34,11 @@ class ListSelectAdapter(
                 binding.LBLListName.text = this.listName
                 binding.LBLItemCount.text = "${this.titleCount} titles"
 
-                val isAlreadyInList = this.items.contains(currentTitleId)
+                val isAlreadyInList = this.items.contains(currentTitleId)//checks if item already in list
 
                 if (isAlreadyInList) {
-                    binding.IMGStatus.setImageResource(R.drawable.checked_icon)
-                    holder.itemView.alpha = 0.5f
+                    binding.IMGStatus.setImageResource(R.drawable.checked_icon)// check as cheked
+                    holder.itemView.alpha = 0.5f// make it little transparent
                 } else {
                    binding.IMGStatus.setImageResource(R.drawable.add_btn)
                     holder.itemView.alpha = 1.0f
@@ -45,7 +46,7 @@ class ListSelectAdapter(
 
                 itemView.setOnClickListener {
                     val currentTime = System.currentTimeMillis()
-                    if (currentTime - lastClickTime > 500) {
+                    if (currentTime - lastClickTime > 500) {//so it won't add twice
                         lastClickTime = currentTime
                         if(!isAlreadyInList) {
                             callback.watchlistClicked(this)

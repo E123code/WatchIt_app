@@ -166,7 +166,7 @@ class DetailsActivity : AppCompatActivity() {
                         details.isFavorite = wasFavorite
                         updateHeartUI(wasFavorite)
                         SignalManager.getInstance()
-                            .toast("Connection error", SignalManager.ToastLength.SHORT)
+                            .toast("Error", SignalManager.ToastLength.SHORT)
                     } else {
                         SignalManager.getInstance()
                             .toast("Added to favorites", SignalManager.ToastLength.SHORT)
@@ -181,7 +181,7 @@ class DetailsActivity : AppCompatActivity() {
                         details.isFavorite = wasFavorite
                         updateHeartUI(wasFavorite)
                         SignalManager.getInstance()
-                            .toast("Connection error", SignalManager.ToastLength.SHORT)
+                            .toast("Error", SignalManager.ToastLength.SHORT)
                     } else {
                         SignalManager.getInstance()
                             .toast("Removed from favorites", SignalManager.ToastLength.SHORT)
@@ -223,6 +223,7 @@ class DetailsActivity : AppCompatActivity() {
                 sheetBinding.LBLNoLists.visibility = View.GONE
                 val callback = object : AddCallback {
                     override fun watchlistClicked(watchlist: Watchlist) {
+                        sheetBinding.rvLists.isEnabled = false// prevent double click
                         FireStoreManager.getInstance()
                             .addTitle(details.toMediaItem(), watchlist.id) { result ->
                                 sheetBinding.rvLists.isEnabled = true

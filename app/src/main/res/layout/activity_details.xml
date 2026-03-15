@@ -14,7 +14,8 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:background="@color/cv_background"
-        android:padding="16dp">
+        android:padding="16dp"
+        android:descendantFocusability="blocksDescendants">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -53,7 +54,7 @@
                     android:id="@+id/BTN_Favorite"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:contentDescription="choose favorite"
+                    android:contentDescription="@string/choose_favorite"
                     app:fabCustomSize="@dimen/favorite_icon_size"
                     app:maxImageSize="35dp"
                     android:scaleType="center"
@@ -66,7 +67,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="add to list"
+                    android:text="@string/add_to_list"
                     android:backgroundTint="@color/theme_yellow"
                     android:textColor="@color/black"/>
 
@@ -138,7 +139,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/default_margin"
-                        android:text="Rating:"
+                        android:text="@string/rating"
                         android:textColor="@color/cv_text"
                         android:textSize="@dimen/detail_text_size" />
 
@@ -168,7 +169,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Your Rating:"
+                        android:text="@string/your_rating"
                         android:textColor="@color/cv_text"
                         android:textSize="@dimen/detail_text_size" />
 
@@ -198,7 +199,7 @@
                 android:layout_marginTop="@dimen/default_margin"
                 android:layout_marginBottom="@dimen/default_margin"
                 android:backgroundTint="@color/black"
-                android:contentDescription="Back"
+                android:contentDescription="@string/back"
                 android:scaleType="centerInside"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -224,7 +225,7 @@
             android:id="@+id/NoProviders"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="There are no streaming platforms available in your region."
+            android:text="@string/no_streaming"
             android:textColor="@color/cv_text"
             android:textSize="@dimen/default_title_size"
             android:layout_marginTop="@dimen/default_margin"
@@ -243,7 +244,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="Overview"
+            android:text="@string/overview"
             android:textColor="@color/theme_yellow"
             android:textSize="@dimen/default_title_size"
             android:textStyle="bold" />
@@ -262,7 +263,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="Cast"
+            android:text="@string/cast"
             android:textColor="@color/theme_yellow"
             android:textSize="@dimen/default_title_size"
             android:textStyle="bold" />
@@ -274,6 +275,7 @@
             android:layout_marginTop="8dp"
             android:clipToPadding="false"
             android:orientation="horizontal"
+            android:paddingBottom="16dp"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:listitem="@layout/cast_member" />
 

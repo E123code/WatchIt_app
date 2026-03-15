@@ -9,8 +9,8 @@
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/friend_IMG"
-        android:layout_width="@dimen/profile_picture_width"
-        android:layout_height="@dimen/profile_picture_height"
+        android:layout_width="@dimen/cast_picture_width"
+        android:layout_height="@dimen/cast_picture_height"
         android:scaleType="centerCrop"
         android:src="@drawable/round_profile_circle"
         app:shapeAppearanceOverlay="@style/CircleImage" />

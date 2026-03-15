@@ -101,10 +101,10 @@ class WatchlistActivity : AppCompatActivity() {
                                 title.isFavorite = previous
                                 mediaAdapter.notifyItemChanged(position)
                                 SignalManager.getInstance()
-                                    .toast("error", SignalManager.ToastLength.SHORT)
+                                    .toast("Error", SignalManager.ToastLength.SHORT)
                             } else {
                                 SignalManager.getInstance()
-                                    .toast("added to favorites", SignalManager.ToastLength.SHORT)
+                                    .toast("Added to favorites", SignalManager.ToastLength.SHORT)
                             }
                         }
                 } else {
@@ -114,17 +114,15 @@ class WatchlistActivity : AppCompatActivity() {
                                 title.isFavorite = previous
                                 viewHolder?.binding?.IMGFavorite?.isEnabled = true
                                 SignalManager.getInstance()
-                                    .toast("error", SignalManager.ToastLength.SHORT)
+                                    .toast("Error", SignalManager.ToastLength.SHORT)
                             } else {
-                                if (listID == Constants.FIRESTORE.FAVORITES&& listOwner == myId){
-                                    removeLocally(position)
-                                } else {
+                                if (listID != Constants.FIRESTORE.FAVORITES || listOwner != myId){
                                     viewHolder?.binding?.IMGFavorite?.isEnabled = true
                                     mediaAdapter.notifyItemChanged(position)
                                 }
                                 SignalManager.getInstance()
                                     .toast(
-                                        "deleted from favorites",
+                                        "Removed from favorites",
                                         SignalManager.ToastLength.SHORT
                                     )
                             }
@@ -139,6 +137,9 @@ class WatchlistActivity : AppCompatActivity() {
                         removeLocally(position)
                         SignalManager.getInstance()
                             .toast("deleted from Watchlist", SignalManager.ToastLength.SHORT)
+                    }else{
+                        SignalManager.getInstance()
+                            .toast("error", SignalManager.ToastLength.SHORT)
                     }
                 }
             }
@@ -149,7 +150,7 @@ class WatchlistActivity : AppCompatActivity() {
 
     }
 
-
+//removes locally form the adapter list
     private fun removeLocally(position: Int) {
         mediaAdapter.removeItem(position)
 

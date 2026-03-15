@@ -15,10 +15,15 @@ import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult
 import com.google.firebase.auth.FirebaseAuth
 
+//activity for the login process
 class AuthLoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAutnLoginBinding
 
+    /**
+     * Initializes the FirebaseUI sign-in flow.
+     * Configures email-based authentication with custom styling and mandatory name requirement when signing up
+     */
     private fun signIn() {
         val providers = arrayListOf(
             AuthUI.IdpConfig.EmailBuilder().setRequireName(true).setAllowNewAccounts(true).build()
@@ -40,7 +45,7 @@ class AuthLoginActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        installSplashScreen()//splash screen in start of app
         super.onCreate(savedInstanceState)
         binding = ActivityAutnLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -101,7 +106,7 @@ class AuthLoginActivity : AppCompatActivity() {
 
 
 
-
+// goes to main activity
     private fun transactToNextScreen() {
         startActivity(
             Intent(this, MainActivity::class.java)

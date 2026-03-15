@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="90dp"
+    android:layout_width="105dp"
     android:layout_height="wrap_content"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="4dp">
+    android:paddingBottom="4dp">
+
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/CastProfile_IMG"
-        android:layout_width="@dimen/profile_picture_width"
-        android:layout_height="@dimen/profile_picture_height"
+        android:layout_width="@dimen/cast_picture_width"
+        android:layout_height="@dimen/cast_picture_height"
         android:scaleType="centerCrop"
         android:src="@drawable/round_profile_circle"
         app:shapeAppearanceOverlay="@style/CircleImage" />
@@ -19,23 +20,24 @@
         android:id="@+id/CastName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:ellipsize="end"
-        android:gravity="center"
+        android:layout_marginTop="2dp"
+        android:gravity="center_horizontal"
+        android:minLines="2"
+        android:maxLines="3"
         android:text="@string/actorName"
         android:textColor="@color/white"
-        android:textSize="@dimen/detail_text_size"
+        android:textSize="@dimen/card_text_size"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/CharacterName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:gravity="center"
-        android:minLines="1"
+        android:gravity="center_horizontal"
+        android:minLines="2"
+        android:maxLines="4"
         android:text="@string/character"
         android:textColor="@color/cv_text"
-        android:textSize="16sp" />
+        android:textSize="@dimen/card_text_size" />
 
 </LinearLayout>

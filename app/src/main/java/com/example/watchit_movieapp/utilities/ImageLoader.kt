@@ -12,6 +12,7 @@ import com.bumptech.glide.request.target.Target
 import com.example.watchit_movieapp.R
 import java.lang.ref.WeakReference
 
+//class of glide to handle image showing
 class ImageLoader private constructor(context: Context) {
     private val contextRef = WeakReference(context)
 
@@ -33,7 +34,7 @@ class ImageLoader private constructor(context: Context) {
         }
     }
 
-
+//loads image
     fun loadImage(
         source: String,
         imageView: ImageView,
@@ -49,11 +50,12 @@ class ImageLoader private constructor(context: Context) {
         }
     }
 
+    //load profile image (for user or cast member)
     fun loadProfile(
         source: String,
         imageView: ImageView,
         placeHolder: Int = R.drawable.round_profile_circle,
-        progressBar: View? = null
+        progressBar: View? = null//in case we upload profile picture, we will see it while it loads the picture
     ) {
         contextRef.get()?.let { context ->
             progressBar?.visibility = View.VISIBLE

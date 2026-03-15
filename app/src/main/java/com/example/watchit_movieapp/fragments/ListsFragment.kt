@@ -53,6 +53,10 @@ class ListsFragment : Fragment() {
 
     }
 
+
+    /**
+     * sets up the Watchlist recycleView
+     */
     private fun setupRecyclerView() {
         val callback = object : ListClickedCallback {
             override fun watchlistClicked(watchlist: Watchlist) {
@@ -107,6 +111,10 @@ class ListsFragment : Fragment() {
             .show()
     }
 
+    //adding new watchList
+    /**
+     * opens a dialog to enter the name of the new list
+     */
     private fun addList() {
         val input = EditText(requireContext())
         input.hint = "Enter list name"
@@ -138,6 +146,9 @@ class ListsFragment : Fragment() {
 
     }
 
+    /**
+     * gets the new list name from the dialog and creates new watchList for the user
+     */
     private fun createNewList(listName: String) {
         FireStoreManager.getInstance().addWatchList(listName) { success ->
             if (success) {
@@ -150,6 +161,7 @@ class ListsFragment : Fragment() {
         }
     }
 
+    //start the snapshot listener
     private fun startListsListen() {
         if (listsListener == null) {
             listsListener = FireStoreManager.getInstance().showMyLists { watchlists ->
@@ -159,6 +171,7 @@ class ListsFragment : Fragment() {
         }
     }
 
+    //stop the snapshot listener
     private fun stopListListen() {
 
         listsListener?.remove()

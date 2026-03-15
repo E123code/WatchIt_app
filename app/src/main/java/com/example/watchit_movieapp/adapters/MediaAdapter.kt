@@ -15,7 +15,7 @@ import com.example.watchit_movieapp.utilities.FireStoreManager
 import com.example.watchit_movieapp.utilities.GenresMap
 import com.example.watchit_movieapp.utilities.ImageLoader
 
-
+//adapter for media item cards
 class MediaAdapter(
     private var items: List<MediaItem> = emptyList(),
     private val mode: AdapterMode,
@@ -89,6 +89,7 @@ class MediaAdapter(
 
     override fun getItemCount(): Int = items.size
 
+    //removing item from list
     fun removeItem(position: Int) {
         if (position >= 0 && position < items.size) {
             val mutableList = items.toMutableList()
@@ -100,6 +101,7 @@ class MediaAdapter(
         }
     }
 
+    //syncing the favorite status for the items on the list
     fun syncFavorites() {
         this.items.forEach { item ->
             item.isFavorite = FireStoreManager.getInstance().isInFavorites(item.id)
@@ -107,6 +109,7 @@ class MediaAdapter(
 
         notifyDataSetChanged()
     }
+
     inner class MediaViewHolder(val binding: MediaItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
         init {

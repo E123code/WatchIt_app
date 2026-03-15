@@ -32,6 +32,9 @@ class ProfileFragment : Fragment() {
     private var _binding: ProfileFragmentBinding? = null
     private val binding get() = _binding!!
 
+    /**
+     * resultActivity for picking the image from gallery
+     */
     private val pickMedia =
         registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             if (uri != null) {
@@ -45,6 +48,7 @@ class ProfileFragment : Fragment() {
 
         }
 
+    //observer to change UI if the snapshot in Main Alerts of changes in User details
     private val userObserver: (User?) -> Unit = { user ->
         loadUser(user)
     }
@@ -84,7 +88,9 @@ class ProfileFragment : Fragment() {
 
     }
 
-
+    /**
+     * loads the user details from firestore
+     */
     fun loadUser(user: User?) {
 
         if (_binding == null || user == null) return
@@ -114,6 +120,9 @@ class ProfileFragment : Fragment() {
 
     }
 
+    /**
+     *sets up the recycleView of User's friends list
+     */
     private fun setupRecycleView() {
         val callback = object : UserClickedCallback {
             override fun userClicked(userId: String) {
@@ -134,11 +143,17 @@ class ProfileFragment : Fragment() {
     }
 
 
+    /**
+     * opens the user search activity
+     */
     private fun openUsersSearch() {
         val intent = Intent(requireContext(), SearchUsersActivity::class.java)
         startActivity(intent)
     }
 
+    /**
+     * uploads the image to Storage of firebase and adds the url to the User File
+     */
     private fun uploadImage(uri: Uri) {
 
         binding.profileProgressBar.visibility = View.VISIBLE
@@ -157,6 +172,9 @@ class ProfileFragment : Fragment() {
 
     }
 
+    /**
+     * logs out of user's account and returns to the login activity
+     */
     private fun logoutLogic() {
         FirebaseAuth.getInstance().signOut()
         FireStoreManager.getInstance().clearData()

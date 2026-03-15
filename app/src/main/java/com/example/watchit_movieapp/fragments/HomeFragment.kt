@@ -14,6 +14,7 @@ import com.example.watchit_movieapp.databinding.HomeFragmentBinding
 import com.example.watchit_movieapp.interfaces.MediaItemClickedCallback
 import com.example.watchit_movieapp.interfaces.TitleCallback
 import com.example.watchit_movieapp.model.MediaItem
+import com.example.watchit_movieapp.model.User
 import com.example.watchit_movieapp.utilities.AdapterMode
 import com.example.watchit_movieapp.utilities.Constants
 import com.example.watchit_movieapp.utilities.FireStoreManager
@@ -30,12 +31,12 @@ class HomeFragment : Fragment() {
 
     private lateinit var mediaAdapter: MediaAdapter
 
-    private var cachedMovies: List<MediaItem>? = null
-    private var cachedTVShows: List<MediaItem>? = null
+    private var cachedMovies: List<MediaItem>? = null//local container of the movies
+    private var cachedTVShows: List<MediaItem>? = null//local container of TV shows
     private var lastLoadedUrl = ""
 
-
-    private val userObserver: (com.example.watchit_movieapp.model.User?) -> Unit = { _ ->
+//observer for the changes on the user
+    private val userObserver: (User?) -> Unit = { _ ->
         if (isAdded && !isHidden) {
             refreshUI()
         }
@@ -67,7 +68,7 @@ class HomeFragment : Fragment() {
         FireStoreManager.getInstance().addObserver(userObserver)
     }
 
-    private fun updateProfileImageUI() {
+    private fun updateProfileImageUI() { // loading the user profile picture
         val user = FireStoreManager.getInstance().currentUser
         if (user != null && user.profileImageUrl.isNotEmpty() && user.profileImageUrl != lastLoadedUrl) {
             ImageLoader.getInstance().loadProfile(user.profileImageUrl, binding.ProfileIMG)
@@ -75,7 +76,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-
+//sets up the list of movies / TV shows
     private fun setupRecyclerView() {
         val callback = object : MediaItemClickedCallback {
             override fun mediaItemClicked(mediaItem: MediaItem) {
@@ -85,7 +86,7 @@ class HomeFragment : Fragment() {
         }
         mediaAdapter = MediaAdapter(emptyList(), AdapterMode.HOME, callback)
 
-        mediaAdapter.titleCallback = object : TitleCallback {
+        mediaAdapter.titleCallback = object : TitleCallback { // callback when you press the heart icon
             override fun favoriteButtonClicked(title: MediaItem, position: Int) {
                 val viewHolder =
                     binding.rvMedia.findViewHolderForAdapterPosition(position) as? MediaAdapter.MediaViewHolder
@@ -104,10 +105,10 @@ class HomeFragment : Fragment() {
                                 title.isFavorite = previous
                                 mediaAdapter.notifyItemChanged(position)
                                 SignalManager.getInstance()
-                                    .toast(" error", SignalManager.ToastLength.SHORT)
+                                    .toast(" Error ", SignalManager.ToastLength.SHORT)
                             } else {
                                 SignalManager.getInstance()
-                                    .toast("added to favorites", SignalManager.ToastLength.SHORT)
+                                    .toast("Added to favorites", SignalManager.ToastLength.SHORT)
                             }
                         }
                 } else {
@@ -118,8 +119,11 @@ class HomeFragment : Fragment() {
                                 title.isFavorite = previous
                                 mediaAdapter.notifyItemChanged(position)
                                 SignalManager.getInstance()
+                                    .toast("Error", SignalManager.ToastLength.SHORT)
+                            }else{
+                                SignalManager.getInstance()
                                     .toast(
-                                        "deleted from favorites",
+                                        "Removed from favorites",
                                         SignalManager.ToastLength.SHORT
                                     )
                             }
@@ -142,7 +146,7 @@ class HomeFragment : Fragment() {
 
     }
 
-
+//set up the tab layout
     private fun setupTabsLogic() {
         binding.homeTabLayout.addOnTabSelectedListener(object :
             com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
@@ -158,6 +162,7 @@ class HomeFragment : Fragment() {
         })
     }
 
+    //loads the movies from the TMDB API
     private fun loadMovies() {
         if (cachedMovies != null) {
             mediaAdapter.updateData(cachedMovies!!)
@@ -182,6 +187,7 @@ class HomeFragment : Fragment() {
         }
     }
 
+    //loads the movies from the TMDB API
     private fun loadTVShows() {
         if (cachedTVShows != null) {
             mediaAdapter.updateData(cachedTVShows!!)

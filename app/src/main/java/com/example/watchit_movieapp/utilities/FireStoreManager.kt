@@ -14,9 +14,10 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.storage.FirebaseStorage
 import java.util.UUID
 
+//managing class to all firestore and storage operations
 class FireStoreManager private constructor(context: Context) {
 
-
+//create singleton
     companion object {
         @Volatile
         private var instance: FireStoreManager? = null
@@ -42,14 +43,14 @@ class FireStoreManager private constructor(context: Context) {
     val storage: FirebaseStorage
         get() = FirebaseStorage.getInstance()
 
-    private val uid: String
+    private val uid: String// the userID of the current User
         get() = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
 
-    var currentUser: User? = null
+    var currentUser: User? = null// the current User details
         private set
 
-    private val userObservers = mutableListOf<(User?) -> Unit>()
+    private val userObservers = mutableListOf<(User?) -> Unit>()//observers in case of change in user
 
     fun addObserver(observer: (User?) -> Unit) {
         userObservers.add(observer)
@@ -64,6 +65,10 @@ class FireStoreManager private constructor(context: Context) {
         userObservers.forEach { it(currentUser) }
     }
 
+    /**
+     * gets the current user and checks if
+     * there is a document in firestore for him if not creates one
+     */
     fun checkUserSaved(currentUser: FirebaseUser) {
         val userRef = db.collection(Constants.FIRESTORE.USERS_REF).document(currentUser.uid)
         userRef.get().addOnSuccessListener { document ->
@@ -75,6 +80,9 @@ class FireStoreManager private constructor(context: Context) {
         }
     }
 
+    /**
+     *gets the current logged user and creates user document for him and favorite list document in firestore
+     */
     fun createUser(currentUser: FirebaseUser) {
 
         val newUser = User(currentUser.uid, currentUser.displayName ?: "", currentUser.email ?: "")
@@ -101,6 +109,10 @@ class FireStoreManager private constructor(context: Context) {
         }
     }
 
+    /**
+     * sets snapshot listener for user in case of change
+     * notifies observers
+     */
     fun loadCurrentUser(onUpdate: (User?) -> Unit): ListenerRegistration? {
         val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: return null
         return db.collection(Constants.FIRESTORE.USERS_REF).document(currentUid)
@@ -111,7 +123,7 @@ class FireStoreManager private constructor(context: Context) {
                 } else {
                     val user = snapshot?.toObject(User::class.java)
                     if (user != null) {
-                        this.currentUser = user
+                        this.currentUser = user// updates the manager of the current user
                         onUpdate(user)
 
                         notifyObservers()
@@ -121,10 +133,16 @@ class FireStoreManager private constructor(context: Context) {
             }
     }
 
+    //checks if title in favorite list
     fun isInFavorites(titleId: String): Boolean {
         return currentUser?.favorites?.contains(titleId) == true
     }
 
+    /**
+     * gets title and watch list ID
+     * add title to the Title collection of user and adds its ID to the Watchlist
+     * if it is added to favorites also adding it to favorite list in User
+     */
     fun addTitle(title: MediaItem, listId: String, onComplete: (String) -> Unit) {
         val userRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
         val listRef = userRef.collection(Constants.FIRESTORE.WATCHLISTS_REF)
@@ -172,6 +190,11 @@ class FireStoreManager private constructor(context: Context) {
 
     }
 
+    /**
+     * gets title ID and watch list ID
+     * removes title ID from the Watchlist
+     * if it is removed from  favorites also removing it from favorite list in User
+     */
     fun removeTitle(titleId: String, listId: String, onResult: (Boolean) -> Unit) {
         val userRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
         val listRef = db.document(
@@ -222,6 +245,10 @@ class FireStoreManager private constructor(context: Context) {
     }
 
 
+    /**
+     * gets user ID and list ID
+     *loads all the media items in the list with the same list ID that belong to the user id
+     */
     fun loadWatchlist(
         userid: String,
         listId: String,
@@ -262,7 +289,10 @@ class FireStoreManager private constructor(context: Context) {
             }
     }
 
-
+    /**
+     * gets list ID
+     *adds the list to the list collection of the user
+     */
     fun addWatchList(listName: String, onResult: (Boolean) -> Unit) {
         val watchlistRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
             .collection(Constants.FIRESTORE.WATCHLISTS_REF)
@@ -285,6 +315,11 @@ class FireStoreManager private constructor(context: Context) {
             }
     }
 
+
+    /**
+     * gets list ID
+     *removes the list from the list collection of the user
+     */
     fun deleteWatchlist(listId: String, onResult: (Boolean) -> Unit) {
         if (listId == Constants.FIRESTORE.FAVORITES) {
             onResult(false)
@@ -308,6 +343,9 @@ class FireStoreManager private constructor(context: Context) {
             }
     }
 
+    /**
+     * shows all the lists of the current logged user
+     */
     fun showMyLists(onUpdate: (List<Watchlist>) -> Unit): ListenerRegistration? {
         val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: return null
         val watchlistRef = db.collection(Constants.FIRESTORE.USERS_REF).document(currentUid)
@@ -333,6 +371,10 @@ class FireStoreManager private constructor(context: Context) {
 
     }
 
+    /**
+     * gets the friend user iD
+     * shows all the lists of the friend form firestore based on his user ID
+     */
     fun getFriendWatchlists(friendId: String, onComplete: (List<Watchlist>) -> Unit) {
         db.collection(Constants.FIRESTORE.USERS_REF).document(friendId)
             .collection(Constants.FIRESTORE.WATCHLISTS_REF)
@@ -355,6 +397,11 @@ class FireStoreManager private constructor(context: Context) {
             }
     }
 
+    /**
+     * gets the friend user iD
+     * adds the friend to the current user's friend list
+     * adds the user to the friend's user's friend list
+     */
     fun addFriend(friendId: String, onResult: (Boolean) -> Unit) {
         val myRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
         val friendRef = db.collection(Constants.FIRESTORE.USERS_REF).document(friendId)
@@ -368,6 +415,11 @@ class FireStoreManager private constructor(context: Context) {
             .addOnFailureListener { onResult(false) }
     }
 
+    /**
+     * gets the friend user iD
+     * removes the friend from the current user's friend list
+     * removes the user from the friend's user's friend list
+     */
     fun removeFriend(friendId: String, onResult: (Boolean) -> Unit) {
 
         val myRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
@@ -384,6 +436,10 @@ class FireStoreManager private constructor(context: Context) {
 
     }
 
+    /**
+     * gets the friends id list of user's friends
+     * and returns list of friends user data (except password)
+     */
     fun getFriendsList(friends: List<String>, onComplete: (List<User>) -> Unit) {
         if (friends.isEmpty()) {
             onComplete(emptyList())
@@ -401,6 +457,10 @@ class FireStoreManager private constructor(context: Context) {
 
     }
 
+    /**
+     * gets the user id
+     * and returns the user profile of the user (not for current user )
+     */
     fun getFriendProfile(userid: String, onComplete: (User?) -> Unit) {
         db.collection(Constants.FIRESTORE.USERS_REF).document(userid)
             .get()
@@ -418,6 +478,12 @@ class FireStoreManager private constructor(context: Context) {
             }
     }
 
+
+    /**
+     * gets friend's user id
+     * Provides a real-time stream of the friendship status between the current user
+     * and friend, allowing the UI to toggle the "Add/Remove Friend" button instantly.
+     */
     fun observeFriendship(
         friendId: String,
         onStatusChanged: (Boolean) -> Unit
@@ -442,6 +508,10 @@ class FireStoreManager private constructor(context: Context) {
     }
 
 
+    /**
+     * get a name to search and preforms prefix search of all user's with same prefix
+     * returns list of users with same prefix as name
+     */
     fun searchUsers(searchName: String, callback: (List<User>) -> Unit) {
         val usersRef = db.collection(Constants.FIRESTORE.USERS_REF)
 
@@ -467,51 +537,11 @@ class FireStoreManager private constructor(context: Context) {
 
     }
 
-    /* fun addFavorite(title: MediaItem, onResult: (Boolean) -> Unit) {
-         Log.d("FirebaseCheck", "Current UID: $uid")
-         val userRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
-         val favRef = userRef.collection(Constants.FIRESTORE.FAVORITES)
 
-         favRef.document(title.id).set(title).addOnSuccessListener {
-             Log.d(Constants.logMessage.FIRESTORE_KEY, "added to Favorites")
-             userRef.update("favorites", FieldValue.arrayUnion(title.id))
-             onResult(true)
-
-         }.addOnFailureListener { exception ->
-             Log.d(Constants.logMessage.FIRESTORE_KEY, "adding failed", exception)
-             onResult(false)
-         }
-
-     }
-
-     fun deleteFavorite(titleId: String, onResult: (Boolean) -> Unit) {
-         val userRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
-         val favRef = userRef.collection(Constants.FIRESTORE.FAVORITES)
-
-         favRef.document(titleId).delete().addOnSuccessListener {
-             Log.d(Constants.logMessage.FIRESTORE_KEY, "deleted from Favorites")
-             userRef.update("favorites", FieldValue.arrayRemove(titleId))
-             onResult(true)
-
-         }.addOnFailureListener {
-             Log.d(Constants.logMessage.FIRESTORE_KEY, "delete failed", it)
-             onResult(false)
-         }
-     }
-
-     fun showFavorites(userId: String, onComplete: (List<MediaItem>) -> Unit) {
-         db.collection(Constants.FIRESTORE.USERS_REF).document(userId)
-             .collection(Constants.FIRESTORE.FAVORITES)
-             .get()
-             .addOnSuccessListener { snapshot ->
-                 val movies = snapshot.toObjects(MediaItem::class.java)
-                 onComplete(movies)
-             }.addOnFailureListener {
-                 onComplete(emptyList())
-             }
-
-     }*/
-
+    /**
+     * gets the tile id and the rating of the title
+     * saves the rating to the firestore
+     */
     fun saveUserRating(titleId: String, rating: Float, onComplete: (Boolean) -> Unit) {
 
         val data = mapOf(
@@ -526,6 +556,10 @@ class FireStoreManager private constructor(context: Context) {
             .addOnCompleteListener { onComplete(it.isSuccessful) }
     }
 
+    /**
+     * gets the tile id
+     * returns the user personal rating of the title
+     */
     fun getUserRating(titleId: String, onResult: (Float?) -> Unit) {
         val ratingRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
             .collection(Constants.FIRESTORE.RATINGS)
@@ -545,6 +579,10 @@ class FireStoreManager private constructor(context: Context) {
             }
     }
 
+    /**
+     * gets the profile picture URI
+     * and uploads the picture to storage while also updating the user profile picture URL in firestore
+     */
     fun uploadProfileImage(uri: Uri, onComplete: (String?) -> Unit) {
         val storageRef = storage.reference.child("profile_pics/$uid")
         val profileRef = db.collection(Constants.FIRESTORE.USERS_REF).document(uid)
@@ -581,6 +619,9 @@ class FireStoreManager private constructor(context: Context) {
 
     }
 
+    /**
+     * Resets the manager's local state during sign-out.
+     */
     fun clearData() {
         currentUser = null
     }

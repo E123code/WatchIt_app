@@ -1,5 +1,6 @@
 package com.example.watchit_movieapp.utilities
 
+//map of all genres in TMDB
 object GenresMap {
     private val genres = mapOf(
         // ז'אנרים משותפים וסרטים
@@ -39,10 +40,15 @@ object GenresMap {
     fun getGenresString(ids: List<Int>?): String {
         if (ids.isNullOrEmpty()) return ""
 
-        return ids.take(3).joinToString(", ") { getGenreName(it) }
+        return ids.take(3).joinToString(", ") { getGenreName(it) }//takes 3 first genres
     }
 
-    fun getIdsByKeyword(keyword: String): List<Int> {
+    /**
+     * Translates a human-readable genre name (from a Chip or Search) into its
+     * corresponding TMDB numeric IDs. It performs a case-insensitive search
+     * across the genres map to find all matching keys.
+     */
+    fun getIdsByKeyword(keyword: String): List<Int> {//take
         return genres.filter { it.value.contains(keyword, ignoreCase = true) }
             .keys
             .toList()

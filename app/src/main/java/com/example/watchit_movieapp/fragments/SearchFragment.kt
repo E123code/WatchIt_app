@@ -15,6 +15,7 @@ import com.example.watchit_movieapp.databinding.SearchFragmentBinding
 import com.example.watchit_movieapp.interfaces.MediaItemClickedCallback
 import com.example.watchit_movieapp.interfaces.TitleCallback
 import com.example.watchit_movieapp.model.MediaItem
+import com.example.watchit_movieapp.model.User
 import com.example.watchit_movieapp.utilities.AdapterMode
 import com.example.watchit_movieapp.utilities.Constants
 import com.example.watchit_movieapp.utilities.FireStoreManager
@@ -34,7 +35,7 @@ class SearchFragment : Fragment() {
 
     private lateinit var mediaAdapter: MediaAdapter
 
-     private val userObserver: (com.example.watchit_movieapp.model.User?) -> Unit = { _ ->
+     private val userObserver: (User?) -> Unit = { _ ->
          if (isAdded && !isHidden) {
              refreshUI()
          }
@@ -64,7 +65,9 @@ class SearchFragment : Fragment() {
         FireStoreManager.getInstance().addObserver(userObserver)
     }
 
-
+    /**
+     * sets the adapter to show the result list of the search
+     */
     private fun setupRecyclerView() {
         val callback = object : MediaItemClickedCallback {
             override fun mediaItemClicked(mediaItem: MediaItem) {
@@ -92,10 +95,10 @@ class SearchFragment : Fragment() {
                                 title.isFavorite = previous
                                 mediaAdapter.notifyItemChanged(position)
                                 SignalManager.getInstance()
-                                    .toast("error", SignalManager.ToastLength.SHORT)
+                                    .toast("Error", SignalManager.ToastLength.SHORT)
                             } else {
                                 SignalManager.getInstance()
-                                    .toast("added to favorites", SignalManager.ToastLength.SHORT)
+                                    .toast("Added to favorites", SignalManager.ToastLength.SHORT)
                             }
                         }
                 } else {
@@ -106,7 +109,13 @@ class SearchFragment : Fragment() {
                                 title.isFavorite = previous
                                 mediaAdapter.notifyItemChanged(position)
                                 SignalManager.getInstance()
-                                    .toast("deleted from favorites", SignalManager.ToastLength.SHORT)
+                                    .toast("Error", SignalManager.ToastLength.SHORT)
+                            }else{
+                                SignalManager.getInstance()
+                                    .toast(
+                                        "Removed from favorites",
+                                        SignalManager.ToastLength.SHORT
+                                    )
                             }
                         }
                 }
@@ -124,7 +133,11 @@ class SearchFragment : Fragment() {
         binding.results.layoutManager = LinearLayoutManager(requireContext())
     }
 
+    /**
+     * checks what happens in the search bar and handles it
+     */
     private fun setupSearchAndFilters() {
+        //calls search function when user submits the query (presses the search logo on the keyboard)
         binding.searchBar.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 if (!query.isNullOrEmpty()) {
@@ -134,6 +147,7 @@ class SearchFragment : Fragment() {
                 return true
             }
 
+            //clears the result list and hides the filters when the search bar is cleared
             override fun onQueryTextChange(newText: String?): Boolean {
                 if (newText.isNullOrEmpty()) {
                     resultsList = emptyList()
@@ -152,6 +166,11 @@ class SearchFragment : Fragment() {
         }
     }
 
+
+    /**
+     * Executes an API call via Retrofit to search for movies/TV shows.
+     * Filters the raw API response to include only valid media types and resets UI states like genre chips.
+     */
     private fun performSearch(query: String) {
         lifecycleScope.launch {
             try {
@@ -182,41 +201,66 @@ class SearchFragment : Fragment() {
         }
     }
 
+
+    /**
+     * filters the result list according to the pressed chips .
+     * filtering could be by type or genres (according to map)
+     */
+
     private fun applyFilters(checkedIds: List<Int>) {
         if (checkedIds.isEmpty()) {
             mediaAdapter.updateData(resultsList)
+            binding.results.visibility = View.VISIBLE
+            binding.noResultsNotify.visibility = View.GONE
             return
         }
 
+
+
+            val selectedTypes = mutableListOf<String>()
+            val selectedGenreKeywords = mutableListOf<String>()
+
+        //gets al the filters and divides them by type and genre
+        checkedIds.forEach { chipId ->
+            val chip = binding.chipGroupGenres.findViewById<com.google.android.material.chip.Chip>(chipId)
+            val chipText = chip.text.toString()
+
+            when (chipText) {
+                getString(R.string.movies) -> selectedTypes.add("movie")
+                getString(R.string.tv_shows) -> selectedTypes.add("tv")
+                else -> selectedGenreKeywords.add(chipText)
+            }
+        }
+
         val filteredList = resultsList.filter { item ->
-            var matches = true //the condition
+            //checks if title type is in the selected types
+            val matchesType = if (selectedTypes.isEmpty()) true else item.mediaType in selectedTypes
 
-            checkedIds.forEach { chipId ->
-                // gets the chip by his ID
-                val chip =
-                    binding.chipGroupGenres.findViewById<com.google.android.material.chip.Chip>(
-                        chipId
-                    )
-                // search by text
-                when (val chipText = chip.text.toString()) {
-                    getString(R.string.movies) -> if (item.mediaType != "movie") matches = false
-                    getString(R.string.tv_shows) -> if (item.mediaType != "tv") matches = false
-
-                    else -> {
-                        val validIds = GenresMap.getIdsByKeyword(chipText)
-                        val hasGenres = item.genreIds?.any { it in validIds } ?: false
-                        if (!hasGenres) {
-                            matches = false
-                        }
-                    }
+            //checks if title genre is in the selected genres
+            val matchesGenres = if (selectedGenreKeywords.isEmpty()) true else {
+                selectedGenreKeywords.all { keyword ->
+                    val validIds = GenresMap.getIdsByKeyword(keyword)
+                    item.genreIds?.any { it in validIds } ?: false
                 }
             }
-            matches
+
+            matchesType && matchesGenres
         }
         mediaAdapter.updateData(filteredList)
+
+        if (filteredList.isEmpty()) {
+            binding.results.visibility = View.GONE
+            binding.noResultsNotify.visibility = View.VISIBLE
+        } else {
+            binding.results.visibility = View.VISIBLE
+            binding.noResultsNotify.visibility = View.GONE
+        }
     }
 
 
+    /**
+     * refreshes the UI in case of change in favorite status
+     */
     private fun refreshUI() {
         if (::mediaAdapter.isInitialized && resultsList.isNotEmpty()) {
             mediaAdapter.syncFavorites()

@@ -8,6 +8,7 @@ import com.example.watchit_movieapp.interfaces.UserClickedCallback
 import com.example.watchit_movieapp.model.User
 import com.example.watchit_movieapp.utilities.ImageLoader
 
+//adapter to show the Users in the app
 class UserAdapter(
     private var users: List<User> = emptyList(),
     private val callback: UserClickedCallback

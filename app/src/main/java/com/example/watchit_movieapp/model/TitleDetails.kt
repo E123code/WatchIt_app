@@ -2,6 +2,7 @@ package com.example.watchit_movieapp.model
 
 import com.google.gson.annotations.SerializedName
 
+//data class of title details (the same as media Item but more detailed)
 data class TitleDetails(
     @SerializedName("id") val id: Int,
 
@@ -32,16 +33,16 @@ data class TitleDetails(
     @SerializedName("media_type")
     var mediaType: String? = null,
 
-    @SerializedName("runtime")
+    @SerializedName("runtime")// the length  of movie
     val runtime: Int?,
     @SerializedName("number_of_seasons")
     val numberOfSeasons: Int?,
 
-    @SerializedName("credits") val credits: CreditsResponse?,
-    @SerializedName("watch/providers") val watchProviders: WatchProvidersResponse?,
+    @SerializedName("credits") val credits: CreditsResponse?, //the actors
+    @SerializedName("watch/providers") val watchProviders: WatchProvidersResponse?,//where to watch (streaming services)
 
-    @SerializedName("release_dates") val releaseDates: ReleaseDatesResponse?, // לסרטים
-    @SerializedName("content_ratings") val contentRatings: ContentRatingsResponse?, // לסדרות
+    @SerializedName("release_dates") val releaseDates: ReleaseDatesResponse?, // Movie-specific: Used to extract age certification (PG, 16+, etc.) per country.
+    @SerializedName("content_ratings") val contentRatings: ContentRatingsResponse?,// TV-specific: Used to extract age rating/parental guidance for show episodes.
 
     var isFavorite: Boolean = false
 ) {
@@ -56,10 +57,11 @@ data class TitleDetails(
         get() = when (mediaType) {
             "movie" -> (relDate ?: "N/A").take(4)
             "tv" -> (airDate ?: "N/A").take(4)
-            else ->"N/A"
+            else -> "N/A"
         }
 
-    val genres : String
+    val genres: String
+        //to get list of genres takes top 3
         get() = genreObj?.take(3)?.joinToString(" • ") { it.name } ?: "No genres"
 
 
@@ -67,17 +69,20 @@ data class TitleDetails(
         get() = "https://image.tmdb.org/t/p/w500$poster"
 
     val duration: String
-        get() = when(mediaType) {
+        // to determine duration based on type
+        get() = when (mediaType) {
             "movie" -> if (runtime != null && runtime > 0) "$runtime min" else "N/A"
-            "tv" -> if (numberOfSeasons != null && numberOfSeasons > 0){
+            "tv" -> if (numberOfSeasons != null && numberOfSeasons > 0) {
                 if (numberOfSeasons == 1) "1 Season" else "$numberOfSeasons Seasons"
             } else "N/A"
+
             else -> "N/A"
         }
     val ageRating: String
+        //to get the exact age rating base on country and media type
         get() {
 
-            val countriesToSearch = listOf("IL", "DE")
+            val countriesToSearch = listOf("IL", "DE","US")
 
             val rawRating = when (mediaType) {
                 "movie" -> {
@@ -87,78 +92,102 @@ data class TitleDetails(
                     }
                     result?.releaseDates?.firstOrNull()?.certification
                 }
+
                 "tv" -> {
-                    // אותו דבר עבור סדרות
                     val result = countriesToSearch.firstNotNullOfOrNull { code ->
                         contentRatings?.results?.find { it.countryCode == code }
                     }
                     result?.rating
                 }
+
                 else -> null
             }
 
-            // לוגיקת התצוגה
             return when {
                 rawRating.isNullOrEmpty() -> "N/A"
-                rawRating == "0" || rawRating == "6" -> "All"
-                rawRating.all { it.isDigit() } -> "$rawRating+"
+                rawRating == "0" || rawRating == "6" || rawRating.equals("G", ignoreCase = true) || rawRating.equals("TV-G", ignoreCase = true) -> "All"
+                rawRating.equals("R", ignoreCase = true) -> "18+"
+                rawRating.equals("NC-17", ignoreCase = true) -> "18+"
+                rawRating.any { it.isDigit() } -> {
+                    val digits = rawRating.filter { it.isDigit() }
+                    "$digits+"
+                }
+
                 else -> rawRating
             }
         }
 
 
-    fun toggleFavorite() = apply { isFavorite = !isFavorite}
+    fun toggleFavorite() = apply { isFavorite = !isFavorite }// to change status of favorite or not
 
 }
 
-data class Genre(
+data class Genre(// to get the genres
     @SerializedName("id") val id: Int,
     @SerializedName("name") val name: String
 )
 
-data class CreditsResponse(
+data class CreditsResponse( //to get the cast members
     @SerializedName("cast") val cast: List<CastMember>
 )
 
+
+//data class for cast member
 data class CastMember(
     @SerializedName("name") val name: String,
     @SerializedName("character") val character: String,
     @SerializedName("profile_path") val profilePath: String?
-){
+) {
     val fullCastUrl: String
+        // the cast member profile picture
         get() = "https://image.tmdb.org/t/p/w185${profilePath}"
 }
 
-// 3. מודלים של ספקי צפייה (Watch Providers)
+/**
+ * Root response for streaming services.
+ * Uses a Map where the key is the Country Code (e.g., "IL", "US") to support global availability.
+ */
 data class WatchProvidersResponse(
     @SerializedName("results") val results: Map<String, CountryProviders>?
 )
 
+/**
+ * Represents providers available in a specific country.
+ * "flatrate" refers to subscription-based services like Netflix or Disney+.
+ */
 data class CountryProviders(
     @SerializedName("flatrate") val membership: List<ProviderItem>?
 )
 
+/**
+ * Individual streaming service data (e.g., Netflix, Apple TV).
+ */
 data class ProviderItem(
     @SerializedName("provider_name") val name: String,
     @SerializedName("logo_path") val logoPath: String
-){
+) {
     val fullLogoUrl: String
         get() = "https://image.tmdb.org/t/p/original${logoPath}"
 }
 
-    data class ReleaseDatesResponse(@SerializedName("results") val results: List<ReleaseDateResult>?)
+/**
+ * Movie-specific container for age certifications across different regions.
+ */
+data class ReleaseDatesResponse(@SerializedName("results") val results: List<ReleaseDateResult>?)
 
-    data class ReleaseDateResult(
-        @SerializedName("iso_3166_1") val countryCode: String,
-        @SerializedName("release_dates") val releaseDates: List<Certification>
-    )
+data class ReleaseDateResult(
+    @SerializedName("iso_3166_1") val countryCode: String,// e.g., "US", "IL"
+    @SerializedName("release_dates") val releaseDates: List<Certification>
+)
 
-    data class Certification(@SerializedName("certification") val certification: String)
+data class Certification(@SerializedName("certification") val certification: String)
 
-    // לסדרות
-    data class ContentRatingsResponse(@SerializedName("results") val results: List<ContentRatingResult>?)
+/**
+ * TV Show-specific container  for  age ratings.
+ */
+data class ContentRatingsResponse(@SerializedName("results") val results: List<ContentRatingResult>?)
 
-    data class ContentRatingResult(
-        @SerializedName("iso_3166_1") val countryCode: String,
-        @SerializedName("rating") val rating: String
-    )
+data class ContentRatingResult(
+    @SerializedName("iso_3166_1") val countryCode: String,
+    @SerializedName("rating") val rating: String
+)

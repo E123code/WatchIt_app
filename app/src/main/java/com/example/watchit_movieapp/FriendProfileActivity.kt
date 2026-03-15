@@ -241,7 +241,7 @@ class FriendProfileActivity : AppCompatActivity() {
         friendshipListener = null
     }
 
-
+//change look of friend button based on friendship status
     private fun updateButtonUI(friendStatus: Boolean) {
         if (friendStatus) {
             binding.BTNFriendAction.setText(R.string.remove_friend)

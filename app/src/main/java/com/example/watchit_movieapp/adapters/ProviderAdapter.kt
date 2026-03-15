@@ -7,6 +7,7 @@ import com.example.watchit_movieapp.databinding.ItemProviderBinding
 import com.example.watchit_movieapp.model.ProviderItem
 import com.example.watchit_movieapp.utilities.ImageLoader
 
+//adapter to show the list of providers (streaming services)
 class ProviderAdapter : RecyclerView.Adapter<ProviderAdapter.ProviderViewHolder>() {
     private var providers: List<ProviderItem> = emptyList()
 
